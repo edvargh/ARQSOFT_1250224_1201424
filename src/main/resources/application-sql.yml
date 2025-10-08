@@ -1,0 +1,22 @@
+spring:
+  profiles:
+    group:
+      sql-redis: sql,redis
+
+  datasource:
+    url: jdbc:mysql://localhost:3307/library
+      ?useSSL=false
+      &allowPublicKeyRetrieval=true
+      &serverTimezone=UTC
+      &characterEncoding=utf8
+    username: lib
+    password: lib
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true

@@ -35,7 +35,7 @@ public class AuthorServiceImplIntegrationTest {
         List<Author> list = new ArrayList<>();
         list.add(alex);
 
-        Mockito.when(authorRepository.searchByNameName(alex.getName()))
+        Mockito.when(authorRepository.findByName_NameIgnoreCase(alex.getName()))
                 .thenReturn(list);
     }
 

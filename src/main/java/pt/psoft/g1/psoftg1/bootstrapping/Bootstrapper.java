@@ -19,7 +19,6 @@ import pt.psoft.g1.psoftg1.lendingmanagement.model.Lending;
 import pt.psoft.g1.psoftg1.lendingmanagement.repositories.LendingRepository;
 import pt.psoft.g1.psoftg1.readermanagement.model.ReaderDetails;
 import pt.psoft.g1.psoftg1.readermanagement.repositories.ReaderRepository;
-import pt.psoft.g1.psoftg1.shared.model.Photo;
 import pt.psoft.g1.psoftg1.shared.repositories.PhotoRepository;
 import pt.psoft.g1.psoftg1.shared.services.ForbiddenNameService;
 
@@ -60,19 +59,19 @@ public class Bootstrapper implements CommandLineRunner {
     }
 
     private void createAuthors() {
-        if (authorRepository.searchByNameName("Manuel Antonio Pina").isEmpty()) {
+        if (authorRepository.findByName_NameIgnoreCase("Manuel Antonio Pina").isEmpty()) {
             final Author author = new Author("Manuel Antonio Pina",
                     "Manuel António Pina foi um jornalista e escritor português, premiado em 2011 com o Prémio Camões",
                     null);
             authorRepository.save(author);
         }
-        if (authorRepository.searchByNameName("Antoine de Saint Exupéry").isEmpty()) {
+        if (authorRepository.findByName_NameIgnoreCase("Antoine de Saint Exupéry").isEmpty()) {
             final Author author = new Author("Antoine de Saint Exupéry",
                     "Antoine de Saint-Exupéry nasceu a 29 de junho de 1900 em Lyon. Faz o seu batismo de voo aos 12 anos, aos 22 torna-se piloto militar e é como capitão que em 1939 se junta à Força Aérea francesa em luta contra a ocupação nazi. A aviação e a guerra viriam a revelar-se elementos centrais de toda a sua obra literária, onde se destacam títulos como Correio do Sul (1929), o seu primeiro romance, Voo Noturno (1931), que logo se tornou um êxito de vendas internacional, e Piloto de Guerra (1942), retrato da sua participação na Segunda Guerra Mundial. Em 1943 publicaria aquela que é reconhecida como a sua obra-prima, O Principezinho, um dos livros mais traduzidos em todo o mundo. A sua morte, aos 44 anos, num acidente de aviação durante uma missão de reconhecimento no sul de França, permanece ainda hoje um mistério.",
                     null);
             authorRepository.save(author);
         }
-        if (authorRepository.searchByNameName("Alexandre Pereira").isEmpty()) {
+        if (authorRepository.findByName_NameIgnoreCase("Alexandre Pereira").isEmpty()) {
             final Author author = new Author("Alexandre Pereira",
                     "Alexandre Pereira é licenciado e mestre em Engenharia Electrotécnica e de Computadores, pelo Instituto Superior Técnico. É, também, licenciado em Antropologia, pela Faculdade de Ciências Sociais e Humanas da Universidade Nova de Lisboa.\n" +
                             "É Professor Auxiliar Convidado na Universidade Lusófona de Humanidades e Tecnologias, desde Março de 1993, onde lecciona diversas disciplinas na Licenciatura de Informática e lecciona uma cadeira de introdução ao SPSS na Licenciatura de Psicologia.\n" +
@@ -83,26 +82,26 @@ public class Bootstrapper implements CommandLineRunner {
                     null);
             authorRepository.save(author);
         }
-        if (authorRepository.searchByNameName("Filipe Portela").isEmpty()) {
+        if (authorRepository.findByName_NameIgnoreCase("Filipe Portela").isEmpty()) {
             final Author author = new Author("Filipe Portela",
                     " «Docente convidado na Escola de Engenharia da Universidade do Minho. Investigador integrado do Centro Algoritmi. CEO e fundador da startup tecnológica IOTech - Innovation on Technology. Coautor do livro Introdução ao Desenvolvimento Moderno para a Web. ",
                     null);
             authorRepository.save(author);
         }
-        if (authorRepository.searchByNameName("Ricardo Queirós").isEmpty()) {
+        if (authorRepository.findByName_NameIgnoreCase("Ricardo Queirós").isEmpty()) {
             final Author author = new Author("Ricardo Queirós",
                     "Docente na Escola Superior de Media Artes e Design do Politécnico do Porto. Diretor da uniMAD (ESMAD) e membro efetivo do CRACS (INESC TEC). Autor de vários livros sobre tecnologias Web e programação móvel, publicados pela FCA. Coautor do livro Introdução ao Desenvolvimento Moderno para a Web.",
                     null);
             authorRepository.save(author);
         }
-        if (authorRepository.searchByNameName("Freida Mcfadden").isEmpty()) {
+        if (authorRepository.findByName_NameIgnoreCase("Freida Mcfadden").isEmpty()) {
             final Author author = new Author("Freida Mcfadden",
                     "Freida McFadden é médica e especialista em lesões cerebrais. Autora de diversos thrillers psicológicos, todos eles bestsellers, já traduzidos para mais de 30 idiomas. As suas obras foram selecionadas para «O Melhor Livro do Ano» na Amazon e também para «Melhor Thriller» dos Goodreads Choice Awards.\n" +
                             "Freida vive com a sua família e o gato preto numa casa de três andares com vista para o oceano, com escadas que rangem e gemem a cada passo, e ninguém conseguiria ouvi-la se gritasse. A menos que gritasse muito alto, talvez.",
                     null);
             authorRepository.save(author);
         }
-        if (authorRepository.searchByNameName("J R R Tolkien").isEmpty()) {
+        if (authorRepository.findByName_NameIgnoreCase("J R R Tolkien").isEmpty()) {
             final Author author = new Author("J R R Tolkien",
                     "J.R.R. Tolkien nasceu a 3 de Janeiro de 1892, em Bloemfontein.\n" +
                             "Depois de ter combatido na Primeira Guerra Mundial, dedicou-se a uma ilustre carreira académica e foi reconhecido como um dos grandes filólogos do planeta.\n" +
@@ -112,14 +111,14 @@ public class Bootstrapper implements CommandLineRunner {
                     "authorPhotoTest.jpg");
             authorRepository.save(author);
         }
-        if (authorRepository.searchByNameName("Gardner Dozois").isEmpty()) {
+        if (authorRepository.findByName_NameIgnoreCase("Gardner Dozois").isEmpty()) {
             final Author author = new Author("Gardner Dozois",
                     "Gardner Raymond Dozois (23 de julho de 1947 – 27 de maio de 2018) foi um autor de ficção científica norte-americano.\n" +
                             "Foi o fundador e editor do Melhores Do Ano de Ficção científica antologias (1984–2018) e foi editor da revista Asimov Ficção científica (1984-2004), ganhando vários prémios.",
                     null);
             authorRepository.save(author);
         }
-        if (authorRepository.searchByNameName("Lisa Tuttle").isEmpty()) {
+        if (authorRepository.findByName_NameIgnoreCase("Lisa Tuttle").isEmpty()) {
             final Author author = new Author("Lisa Tuttle",
                     "Lisa Gracia Tuttle (nascida a 16 de setembro de 1952) é uma autora americana de ficção científica, fantasia e terror. Publicou mais de uma dúzia de romances, sete coleções de contos e vários títulos de não-ficção, incluindo um livro de referência sobre feminismo, \"Enciclopédia do Feminismo\" (1986). Também editou várias antologias e fez críticas de livros para diversas publicações. Vive no Reino Unido desde 1981.\n" +
                             "Tuttle ganhou o Prémio John W. Campbell para Melhor Novo Escritor em 1974, recebeu o Prémio Nebula de Melhor Conto em 1982 por \"The Bone Flute\", que recusou, e o Prémio BSFA de Ficção Curta em 1989 por \"In Translation\".",
@@ -154,7 +153,7 @@ public class Bootstrapper implements CommandLineRunner {
     protected void createBooks() {
         Optional<Genre> genre = Optional.ofNullable(genreRepository.findByString("Infantil"))
                 .orElseThrow(() -> new NotFoundException("Cannot find genre"));
-        List<Author> author = authorRepository.searchByNameName("Manuel Antonio Pina");
+        List<Author> author = authorRepository.findByName_NameIgnoreCase("Manuel Antonio Pina");
 
         // 1 - O País das Pessoas de Pernas Para o Ar
         if(bookRepository.findByIsbn("9789720706386").isEmpty()) {
@@ -191,7 +190,7 @@ public class Bootstrapper implements CommandLineRunner {
             List<Author> authors = new ArrayList<>();
             genre = Optional.ofNullable(genreRepository.findByString("Informação"))
                     .orElseThrow(() -> new NotFoundException("Cannot find genre"));
-            author = authorRepository.searchByNameName("Alexandre Pereira");
+            author = authorRepository.findByName_NameIgnoreCase("Alexandre Pereira");
             if (genre.isPresent() && !author.isEmpty()) {
                 authors.add(author.get(0));
                 Book book = new Book("9789895612864",
@@ -213,8 +212,8 @@ public class Bootstrapper implements CommandLineRunner {
             List<Author> authors = new ArrayList<>();
             genre = Optional.ofNullable(genreRepository.findByString("Informação"))
                     .orElseThrow(() -> new NotFoundException("Cannot find genre"));
-            author = authorRepository.searchByNameName("Filipe Portela");
-            List<Author> author2 = authorRepository.searchByNameName("Ricardo Queirós");
+            author = authorRepository.findByName_NameIgnoreCase("Filipe Portela");
+            List<Author> author2 = authorRepository.findByName_NameIgnoreCase("Ricardo Queirós");
             if (genre.isPresent() && !author.isEmpty() && !author2.isEmpty()) {
                 authors.add(author.get(0));
                 authors.add(author2.get(0));
@@ -255,7 +254,7 @@ public class Bootstrapper implements CommandLineRunner {
             List<Author> authors = new ArrayList<>();
             genre = Optional.ofNullable(genreRepository.findByString("Infantil"))
                     .orElseThrow(() -> new NotFoundException("Cannot find genre"));
-            author = authorRepository.searchByNameName("Antoine de Saint Exupéry");
+            author = authorRepository.findByName_NameIgnoreCase("Antoine de Saint Exupéry");
             if (genre.isPresent() && !author.isEmpty()) {
                 authors.add(author.get(0));
                 Book book = new Book("9789722328296",
@@ -273,7 +272,7 @@ public class Bootstrapper implements CommandLineRunner {
             List<Author> authors = new ArrayList<>();
             genre = Optional.ofNullable(genreRepository.findByString("Thriller"))
                     .orElseThrow(() -> new NotFoundException("Cannot find genre"));
-            author = authorRepository.searchByNameName("Freida Mcfadden");
+            author = authorRepository.findByName_NameIgnoreCase("Freida Mcfadden");
             if (genre.isPresent() && !author.isEmpty()) {
                 authors.add(author.get(0));
                 Book book = new Book("9789895702756",
@@ -291,7 +290,7 @@ public class Bootstrapper implements CommandLineRunner {
             List<Author> authors = new ArrayList<>();
             genre = Optional.ofNullable(genreRepository.findByString("Fantasia"))
                     .orElseThrow(() -> new NotFoundException("Cannot find genre"));
-            author = authorRepository.searchByNameName("J R R Tolkien");
+            author = authorRepository.findByName_NameIgnoreCase("J R R Tolkien");
             if (genre.isPresent() && !author.isEmpty()) {
                 authors.add(author.get(0));
                 Book book = new Book("9789897776090",
@@ -314,8 +313,8 @@ public class Bootstrapper implements CommandLineRunner {
             List<Author> authors = new ArrayList<>();
             genre = Optional.ofNullable(genreRepository.findByString("Fantasia"))
                     .orElseThrow(() -> new NotFoundException("Cannot find genre"));
-            author = authorRepository.searchByNameName("J R R Tolkien");
-            List<Author> author2 = authorRepository.searchByNameName("Gardner Dozois");
+            author = authorRepository.findByName_NameIgnoreCase("J R R Tolkien");
+            List<Author> author2 = authorRepository.findByName_NameIgnoreCase("Gardner Dozois");
             if (genre.isPresent() && !author.isEmpty() && !author2.isEmpty()) {
                 authors.add(author.get(0));
                 authors.add(author2.get(0));
@@ -337,8 +336,8 @@ public class Bootstrapper implements CommandLineRunner {
             List<Author> authors = new ArrayList<>();
             genre = Optional.ofNullable(genreRepository.findByString("Fantasia"))
                     .orElseThrow(() -> new NotFoundException("Cannot find genre"));
-            author = authorRepository.searchByNameName("J R R Tolkien");
-            List<Author> author2 = authorRepository.searchByNameName("Gardner Dozois");
+            author = authorRepository.findByName_NameIgnoreCase("J R R Tolkien");
+            List<Author> author2 = authorRepository.findByName_NameIgnoreCase("Gardner Dozois");
             if (genre.isPresent() && !author.isEmpty() && !author2.isEmpty()) {
                 authors.add(author.get(0));
                 authors.add(author2.get(0));
@@ -360,8 +359,8 @@ public class Bootstrapper implements CommandLineRunner {
             List<Author> authors = new ArrayList<>();
             genre = Optional.ofNullable(genreRepository.findByString("Fantasia"))
                     .orElseThrow(() -> new NotFoundException("Cannot find genre"));
-            author = authorRepository.searchByNameName("J R R Tolkien");
-            List<Author> author2 = authorRepository.searchByNameName("Lisa Tuttle");
+            author = authorRepository.findByName_NameIgnoreCase("J R R Tolkien");
+            List<Author> author2 = authorRepository.findByName_NameIgnoreCase("Lisa Tuttle");
             if (genre.isPresent() && !author.isEmpty() && !author2.isEmpty()) {
                 authors.add(author.get(0));
                 authors.add(author2.get(0));
