@@ -1,5 +1,6 @@
 package pt.psoft.g1.psoftg1.authormanagement.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import org.hibernate.StaleObjectStateException;
@@ -37,6 +38,7 @@ public class Author extends EntityWithPhoto {
         return version;
     }
 
+    @JsonIgnore
     public Long getId() {
         return authorNumber;
     }

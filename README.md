@@ -1,0 +1,1 @@
+Run command powershell for sql and redis: mvn spring-boot:run -D"spring-boot.run.profiles=sql,redis"
