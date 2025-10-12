@@ -119,6 +119,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/authors/**").permitAll()
                 .requestMatchers("/api/books/**").permitAll()
                 .requestMatchers("/api/genres/**").permitAll()
+                .requestMatchers("/api/lendings/**").permitAll()
                 //.requestMatchers(HttpMethod.POST,"/api/authors").hasRole(Role.LIBRARIAN)
                 //.requestMatchers(HttpMethod.PATCH,"/api/authors/{authorNumber}").hasRole(Role.LIBRARIAN)
                 //.requestMatchers(HttpMethod.GET,"/api/authors/{authorNumber}").hasAnyRole(Role.READER, Role.LIBRARIAN)
@@ -162,13 +163,13 @@ public class SecurityConfig {
                 //.requestMatchers(HttpMethod.GET, "/api/genres/lendingsAverageDurationPerMonth").hasRole(Role.LIBRARIAN)
                 //end genres
                 //lendings
-                .requestMatchers(HttpMethod.GET,"/api/lendings/overdue").hasRole(Role.LIBRARIAN)
-                .requestMatchers(HttpMethod.GET,"/api/lendings/{year}/{seq}").hasAnyRole(Role.READER, Role.LIBRARIAN)
-                .requestMatchers(HttpMethod.POST,"/api/lendings").hasRole(Role.LIBRARIAN)
-                .requestMatchers(HttpMethod.GET,"/api/lendings/avgDuration").hasRole(Role.LIBRARIAN)
-                .requestMatchers(HttpMethod.GET,"/api/lendings/overdue").hasRole(Role.LIBRARIAN)
-                .requestMatchers(HttpMethod.PATCH,"/api/lendings/{year}/{seq}").hasRole(Role.READER)
-                .requestMatchers(HttpMethod.POST,"/api/lendings/search").hasAnyRole(Role.LIBRARIAN)
+                //.requestMatchers(HttpMethod.GET,"/api/lendings/overdue").hasRole(Role.LIBRARIAN)
+                //.requestMatchers(HttpMethod.GET,"/api/lendings/{year}/{seq}").hasAnyRole(Role.READER, Role.LIBRARIAN)
+                //.requestMatchers(HttpMethod.POST,"/api/lendings").hasRole(Role.LIBRARIAN)
+                //.requestMatchers(HttpMethod.GET,"/api/lendings/avgDuration").hasRole(Role.LIBRARIAN)
+                //.requestMatchers(HttpMethod.GET,"/api/lendings/overdue").hasRole(Role.LIBRARIAN)
+                //.requestMatchers(HttpMethod.PATCH,"/api/lendings/{year}/{seq}").hasRole(Role.READER)
+                //.requestMatchers(HttpMethod.POST,"/api/lendings/search").hasAnyRole(Role.LIBRARIAN)
                 //end lendings
                 // Admin has access to all endpoints
                 .requestMatchers("/**").hasRole(Role.ADMIN)
