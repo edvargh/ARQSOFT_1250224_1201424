@@ -40,6 +40,7 @@ public class BookServiceImpl implements BookService {
 	@Value("${suggestionsLimitPerGenre}")
 	private long suggestionsLimitPerGenre;
 
+	@org.springframework.cache.annotation.CacheEvict(cacheNames = "bookByIsbn", key = "#isbn")
 	@Override
 	public Book create(CreateBookRequest request, String isbn) {
 
@@ -76,6 +77,7 @@ public class BookServiceImpl implements BookService {
 	}
 
 
+	@org.springframework.cache.annotation.CacheEvict(cacheNames = "bookByIsbn", key = "#request.isbn")
 	@Override
 	public Book update(UpdateBookRequest request, String currentVersion) {
 
@@ -130,6 +132,7 @@ public class BookServiceImpl implements BookService {
 		return this.bookRepository.findTop5BooksLent(oneYearAgo, pageableRules).getContent();
 	}
 
+	@org.springframework.cache.annotation.CacheEvict(cacheNames = "bookByIsbn", key = "#isbn")
 	@Override
 	public Book removeBookPhoto(String isbn, long desiredVersion) {
 		Book book = this.findByIsbn(isbn);
@@ -160,6 +163,7 @@ public class BookServiceImpl implements BookService {
 		return bookRepository.findByAuthorName(authorName + "%");
 	}
 
+	@org.springframework.cache.annotation.Cacheable(cacheNames = "bookByIsbn", key = "#isbn")
 	public Book findByIsbn(String isbn) {
 		return this.bookRepository.findByIsbn(isbn)
 				.orElseThrow(() -> new NotFoundException(Book.class, isbn));

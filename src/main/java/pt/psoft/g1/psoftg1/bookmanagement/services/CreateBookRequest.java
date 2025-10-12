@@ -11,6 +11,7 @@ import java.util.List;
 
 
 @Getter
+@Setter
 @Data
 @NoArgsConstructor
 @Schema(description = "A DTO for creating a Book")
