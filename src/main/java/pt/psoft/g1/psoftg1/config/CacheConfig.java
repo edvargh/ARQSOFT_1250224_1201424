@@ -5,7 +5,6 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.*;
 import org.springframework.data.redis.cache.*;
 import org.springframework.data.redis.connection.*;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.serializer.*;
 
 import java.time.Duration;
@@ -15,11 +14,6 @@ import java.util.Map;
 @EnableCaching
 @Profile("redis")
 public class CacheConfig {
-
-  @Bean
-  public RedisConnectionFactory redisConnectionFactory() {
-    return new LettuceConnectionFactory("localhost", 6379);
-  }
 
   @Bean
   public CacheManager cacheManager(RedisConnectionFactory cf) {
