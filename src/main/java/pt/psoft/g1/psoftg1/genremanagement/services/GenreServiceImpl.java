@@ -22,11 +22,14 @@ public class GenreServiceImpl implements GenreService {
     private final GenreRepository genreRepository;
 
 
+    @Override
+    @org.springframework.cache.annotation.Cacheable(cacheNames = "genreByName", key = "#name")
     public Optional<Genre> findByString(String name) {
         return genreRepository.findByString(name);
     }
 
     @Override
+    @org.springframework.cache.annotation.Cacheable(cacheNames = "genreAll")
     public Iterable<Genre> findAll() {
         return genreRepository.findAll();
     }
@@ -38,6 +41,7 @@ public class GenreServiceImpl implements GenreService {
     }
 
     @Override
+    @org.springframework.cache.annotation.CacheEvict(cacheNames = {"genreAll", "genreByName"}, allEntries = true)
     public Genre save(Genre genre) {
         return this.genreRepository.save(genre);
     }
