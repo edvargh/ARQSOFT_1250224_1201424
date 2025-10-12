@@ -82,7 +82,7 @@ public interface SpringDataUserRepository extends UserRepository, UserRepoCustom
 		return maybeUser.filter(User::isEnabled).orElseThrow(() -> new NotFoundException(User.class, id));
 	}
 
-	@Cacheable
+	@Cacheable(key = "#username", unless = "#result == null || !#result.isPresent()")
 	Optional<User> findByUsername(String username);
 
 	@Cacheable

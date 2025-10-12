@@ -3,6 +3,7 @@ package pt.psoft.g1.psoftg1.authormanagement.api;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.security.PermitAll;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-
+@PermitAll
 @Tag(name = "Author", description = "Endpoints for managing Authors")
 @RestController
 @RequiredArgsConstructor

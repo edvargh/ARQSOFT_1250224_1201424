@@ -1,6 +1,7 @@
 package pt.psoft.g1.psoftg1.authormanagement.services;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.*;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -30,16 +31,19 @@ public class AuthorServiceImpl implements AuthorService {
     }
 
     @Override
+    @Cacheable(value = "authorById", key = "#authorNumber")
     public Optional<Author> findByAuthorNumber(final Long authorNumber) {
         return authorRepository.findByAuthorNumber(authorNumber);
     }
 
     @Override
+    @Cacheable(value = "authorSearch", key = "'startsWith:' + #name")
     public List<Author> findByName(String name) {
-        return authorRepository.searchByNameNameStartsWith(name);
+        return authorRepository.findByName_NameStartsWithIgnoreCase(name);
     }
 
     @Override
+    @CacheEvict(value = {"authorById","authorSearch"}, allEntries = true)
     public Author create(final CreateAuthorRequest resource) {
         /*
          * Since photos can be null (no photo uploaded) that means the URI can be null as well.
@@ -64,6 +68,7 @@ public class AuthorServiceImpl implements AuthorService {
     }
 
     @Override
+    @CacheEvict(value = {"authorById","authorSearch"}, allEntries = true)
     public Author partialUpdate(final Long authorNumber, final UpdateAuthorRequest request, final long desiredVersion) {
         // first let's check if the object exists so we don't create a new object with
         // save
@@ -112,6 +117,7 @@ public class AuthorServiceImpl implements AuthorService {
         return authorRepository.findCoAuthorsByAuthorNumber(authorNumber);
     }
     @Override
+    @CacheEvict(value = {"authorById","authorSearch"}, allEntries = true)
     public Optional<Author> removeAuthorPhoto(Long authorNumber, long desiredVersion) {
         Author author = authorRepository.findByAuthorNumber(authorNumber)
                 .orElseThrow(() -> new NotFoundException("Cannot find reader"));

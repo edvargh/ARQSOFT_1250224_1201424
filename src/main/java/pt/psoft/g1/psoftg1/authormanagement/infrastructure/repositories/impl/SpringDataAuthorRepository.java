@@ -11,7 +11,7 @@ import pt.psoft.g1.psoftg1.authormanagement.repositories.AuthorRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface SpringDataAuthorRepository extends AuthorRepository, CrudRepository<Author, Long> {
+public interface SpringDataAuthorRepository extends AuthorRepository, org.springframework.data.jpa.repository.JpaRepository<Author, Long> {
     @Override
     Optional<Author> findByAuthorNumber(Long authorNumber);
 
