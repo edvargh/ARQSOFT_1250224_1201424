@@ -23,7 +23,6 @@ public class BookMongoMapper {
         .build();
   }
 
-  /** Minimal reconstruction. We’ll re-attach Genre/Authors in the repository using other repos. */
   public BookDoc toDocShallow(String isbn, String title, String description, String genre,
       List<Long> authorNumbers, List<String> authorNames, String photoFile) {
     return BookDoc.builder()

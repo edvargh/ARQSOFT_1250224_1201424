@@ -35,11 +35,6 @@ public class ForbiddenNameMongoRepository implements ForbiddenNameRepository {
         .collect(Collectors.toList());
   }
 
-  /**
-   * SQL version does: return rows where :pat LIKE %doc.value%.
-   * In Mongo we emulate that by filtering in memory:
-   * keep any forbiddenName that is a substring of 'pat' (case-insensitive).
-   */
   @Override
   public List<ForbiddenName> findByForbiddenNameIsContained(String pat) {
     if (pat == null) return List.of();

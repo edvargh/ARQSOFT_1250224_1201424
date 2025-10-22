@@ -28,13 +28,7 @@ public class ReaderMongoMapper {
         .build();
   }
 
-  /**
-   * Re-hydrate minimal domain object.
-   * Note: we only set fields that exist in the domain and are used by services/controllers.
-   * Reader entity is re-attached in the repository using UserRepository when possible.
-   */
   public ReaderDetails toDomainSkeleton(ReaderDoc d, Reader reader, List<Genre> interests) {
-    // Build ReaderDetails through its public constructor to enforce invariants
     ReaderDetails rd = new ReaderDetails(
         extractSequential(d.getReaderNumber()),
         reader,
@@ -46,14 +40,12 @@ public class ReaderMongoMapper {
         d.getPhotoFile() == null ? null : d.getPhotoFile(),
         interests
     );
-    // fix readerNumber to exact string (constructor builds from seq)
     try {
       var fNum = ReaderDetails.class.getDeclaredField("readerNumber");
       fNum.setAccessible(true);
       fNum.set(rd, new ReaderNumberStringBackdoor(d.getReaderNumber()));
     } catch (Exception ignored) {}
 
-    // set version
     try {
       var fVer = ReaderDetails.class.getDeclaredField("version");
       fVer.setAccessible(true);
@@ -68,7 +60,6 @@ public class ReaderMongoMapper {
     return Integer.parseInt(readerNumber.substring(readerNumber.indexOf('/') + 1));
   }
 
-  /** little helper to assign exact string into ReaderNumber via reflection */
   static class ReaderNumberStringBackdoor extends ReaderNumber {
     public ReaderNumberStringBackdoor(String rn) {
       super();

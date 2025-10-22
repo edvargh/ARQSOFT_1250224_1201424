@@ -11,6 +11,5 @@ public interface SpringMongoForbiddenNameRepo extends MongoRepository<ForbiddenN
 
   Optional<ForbiddenNameDoc> findByForbiddenName(String forbiddenName);
 
-  /** returns number of deleted docs (Spring Data Mongo supports delete count) */
   long deleteByForbiddenName(String forbiddenName);
 }

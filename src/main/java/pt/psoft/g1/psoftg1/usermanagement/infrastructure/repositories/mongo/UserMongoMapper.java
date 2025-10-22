@@ -24,7 +24,7 @@ public class UserMongoMapper {
     return UserDoc.builder()
         .userId(u.getId())
         .username(u.getUsername())
-        .password(extractPasswordUnsafe(u)) // already hashed in domain
+        .password(extractPasswordUnsafe(u))
         .fullName(u.getName() == null ? null : u.getName().toString())
         .enabled(u.isEnabled())
         .roles(roles)
@@ -33,7 +33,6 @@ public class UserMongoMapper {
         .build();
   }
 
-  /** Build a domain User (Reader/Librarian/User) from doc and hydrate ids via reflection. */
   public User toDomain(UserDoc d) {
     if (d == null) return null;
 
@@ -44,25 +43,21 @@ public class UserMongoMapper {
 
     User u;
     if (roles.contains(Role.LIBRARIAN)) {
-      u = new Librarian(uname, "Dummy#123"); // will be replaced with hash below
+      u = new Librarian(uname, "Dummy#123");
     } else if (roles.contains(Role.READER)) {
       u = new Reader(uname, "Dummy#123");
     } else {
       u = new User(uname, "Dummy#123");
     }
 
-    // set full name
     if (fullName != null) {
       u.setName(fullName);
     }
 
-    // enabled
     u.setEnabled(d.isEnabled());
 
-    // ensure all roles exist on domain object
     roles.forEach(r -> u.addAuthority(new Role(r)));
 
-    // reflectively set hashed password and id (avoid re-encoding)
     try {
       Field fp = User.class.getDeclaredField("password");
       fp.setAccessible(true);

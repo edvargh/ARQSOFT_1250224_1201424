@@ -34,10 +34,7 @@ public class ReaderMongoRepository implements ReaderRepository {
   private final ReaderMongoMapper mapper;
   private final GenreRepository genreRepo;
 
-  /** Optional: only used to hydrate Reader entity if present (mixed stores). */
   private final Optional<pt.psoft.g1.psoftg1.usermanagement.repositories.UserRepository> userRepoOpt = Optional.empty();
-
-  /* ------------ helpers ------------ */
 
   private List<Genre> toGenres(List<String> names) {
     if (names == null) return null;
@@ -69,8 +66,6 @@ public class ReaderMongoRepository implements ReaderRepository {
     int size = Math.max(1, page.getLimit());
     return PageRequest.of(p, size);
   }
-
-  /* ------------ contract ------------ */
 
   @Override
   public Optional<ReaderDetails> findByReaderNumber(String readerNumber) {

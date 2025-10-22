@@ -149,7 +149,6 @@ public class AuthorMongoRepository implements AuthorRepository {
         .toList();
   }
 
-  /** aggregation projections */
   private record AuthorLendingAgg(String name, long lendingCount) {}
   private record CoAuthorAgg(Long _id, AuthorDoc author) {}
 }

@@ -29,8 +29,6 @@ public class UserMongoRepository implements UserRepository {
   private final MongoTemplate mongo;
   private final UserMongoMapper mapper;
 
-  /* ---------- helpers ---------- */
-
   private static String ciContains(String s) {
     return ".*" + Pattern.quote(s) + ".*";
   }
@@ -41,7 +39,6 @@ public class UserMongoRepository implements UserRepository {
   private long ensureUserId(User u, UserDoc docFromUsername) {
     if (u.getId() != null) return u.getId();
     if (docFromUsername != null && docFromUsername.getUserId() != null) return docFromUsername.getUserId();
-    // simple unique long; replace with a sequence if you introduce one
     return System.currentTimeMillis();
   }
 
@@ -52,8 +49,6 @@ public class UserMongoRepository implements UserRepository {
       fid.set(u, id);
     } catch (Exception ignored) {}
   }
-
-  /* ---------- contract ---------- */
 
   @Override
   public <S extends User> List<S> saveAll(Iterable<S> entities) {
@@ -66,7 +61,6 @@ public class UserMongoRepository implements UserRepository {
 
   @Override
   public <S extends User> S save(S entity) {
-    // if a doc with this username exists, update it; else create
     var existingByUsername = repo.findByUsername(entity.getUsername()).orElse(null);
 
     Long userId = ensureUserId(entity, existingByUsername);
@@ -74,12 +68,10 @@ public class UserMongoRepository implements UserRepository {
     doc.setUserId(userId);
     if (existingByUsername != null) {
       doc.setId(existingByUsername.getId());
-      // preserve createdAt if you care; we’ll just keep modifiedAt through mapper
     }
 
     var saved = repo.save(doc);
 
-    // reflect id back to domain instance (so callers see the id)
     setDomainId(entity, saved.getUserId());
 
     return entity;
@@ -132,7 +124,6 @@ public class UserMongoRepository implements UserRepository {
   @Override
   public void delete(User user) {
     if (user == null) return;
-    // try by id first, then by username
     if (user.getId() != null) {
       repo.findByUserId(user.getId()).ifPresent(d -> repo.deleteById(d.getId()));
       return;

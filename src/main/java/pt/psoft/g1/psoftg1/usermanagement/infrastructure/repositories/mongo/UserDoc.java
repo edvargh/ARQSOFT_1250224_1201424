@@ -12,19 +12,19 @@ import java.util.Set;
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class UserDoc {
   @Id
-  private String id;                 // Mongo ObjectId (string)
+  private String id;
 
   @Indexed(unique = true)
-  private Long userId;               // mirrors JPA Long id (for findById)
+  private Long userId;
 
   @Indexed(unique = true)
   private String username;
 
-  private String password;           // stored as hash
+  private String password;
   private String fullName;
   private boolean enabled;
 
-  private Set<String> roles;         // Role.authority values
+  private Set<String> roles;
 
   private LocalDateTime createdAt;
   private LocalDateTime modifiedAt;

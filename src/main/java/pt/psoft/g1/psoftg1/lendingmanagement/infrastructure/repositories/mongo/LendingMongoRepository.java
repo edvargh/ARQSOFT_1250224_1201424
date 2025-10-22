@@ -143,8 +143,6 @@ public class LendingMongoRepository implements LendingRepository {
     repo.deleteById(lending.getLendingNumber());
   }
 
-  // ---------- Helpers ----------
-
   private Pageable toPageable(Page page) {
     int defaultNumber = 1;
     int defaultLimit  = 10;
@@ -165,7 +163,6 @@ public class LendingMongoRepository implements LendingRepository {
     ReaderDetails reader = readerRepository.findByReaderNumber(doc.getReaderNumber())
         .orElseThrow(() -> new IllegalArgumentException("Reader not found for " + doc.getReaderNumber()));
 
-    // parse "YYYY/seq"
     String ln = doc.getLendingNumber();
     int year = Integer.parseInt(ln.substring(0, 4));
     int seq = Integer.parseInt(ln.substring(5));

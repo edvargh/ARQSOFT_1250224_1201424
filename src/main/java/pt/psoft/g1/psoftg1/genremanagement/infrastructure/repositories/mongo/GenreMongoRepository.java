@@ -30,8 +30,6 @@ public class GenreMongoRepository implements GenreRepository {
   private final SpringMongoGenreRepo repo;
   private final MongoTemplate mongo;
 
-  /* ----------------- helpers ----------------- */
-
   private Genre toDomain(GenreDoc d) { return new Genre(d.getGenre()); }
 
   private GenreDoc toDoc(Genre g) {
@@ -45,8 +43,6 @@ public class GenreMongoRepository implements GenreRepository {
   private Date toEndOfDay(LocalDate d) {
     return Date.from(d.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
   }
-
-  /* -------------- contract impl -------------- */
 
   @Override
   public Iterable<Genre> findAll() {
@@ -73,10 +69,6 @@ public class GenreMongoRepository implements GenreRepository {
     repo.findByGenre(genre.toString()).ifPresent(d -> repo.deleteById(d.getId()));
   }
 
-  /**
-   * Top genres by book count.
-   * Aggregates on "books" collection (BookDoc.genre is a simple string).
-   */
   @Override
   public Page<GenreBookCountDTO> findTop5GenreByBookCount(Pageable pageable) {
     GroupOperation group = group("genre").count().as("bookCount");
@@ -91,7 +83,6 @@ public class GenreMongoRepository implements GenreRepository {
         .map(r -> new GenreBookCountDTO(r.id, r.bookCount))
         .toList();
 
-    // total count for Page: run a tiny aggregation without skip/limit and count client-side
     var totalAgg = mongo.aggregate(newAggregation(group), "books", GenreBookCountAgg.class);
     long total = totalAgg.getMappedResults().size();
 
@@ -100,10 +91,6 @@ public class GenreMongoRepository implements GenreRepository {
 
   private record GenreBookCountAgg(String id, long bookCount) {}
 
-  /**
-   * Average lendings per day in a given month, grouped by book genre.
-   * Uses "lendings" + $lookup into "books" via (bookIsbn -> isbn).
-   */
   @Override
   public List<GenreLendingsDTO> getAverageLendingsInMonth(LocalDate month, pt.psoft.g1.psoftg1.shared.services.Page page) {
     int days = month.lengthOfMonth();
@@ -123,7 +110,6 @@ public class GenreMongoRepository implements GenreRepository {
 
     var results = mongo.aggregate(agg, "lendings", GenreAvgAgg.class).getMappedResults();
 
-    // paging (simple in-memory since result is small)
     int from = Math.max(0, (page.getNumber() - 1) * page.getLimit());
     int to = Math.min(results.size(), from + page.getLimit());
     if (from >= to) return List.of();
@@ -135,9 +121,6 @@ public class GenreMongoRepository implements GenreRepository {
 
   private record GenreAvgAgg(String genre, double avg) {}
 
-  /**
-   * Lendings count per month over last 12 months, grouped by genre.
-   */
   @Override
   public List<GenreLendingsPerMonthDTO> getLendingsPerMonthLastYearByGenre() {
     LocalDate now = LocalDate.now();
@@ -164,7 +147,6 @@ public class GenreMongoRepository implements GenreRepository {
 
     var rows = mongo.aggregate(agg, "lendings", YMGCountAgg.class).getMappedResults();
 
-    // group into DTO shape: List<GenreLendingsPerMonthDTO>
     Map<Integer, Map<Integer, List<GenreLendingsDTO>>> grouped =
         rows.stream().collect(Collectors.groupingBy(
             r -> r.year,
@@ -192,10 +174,6 @@ public class GenreMongoRepository implements GenreRepository {
 
   private record YMGCountAgg(int year, int month, String genre, long count) {}
 
-  /**
-   * Average lending duration per month (days), grouped by genre, within a date window.
-   * Only considers lendings with returnedDate != null.
-   */
   @Override
   public List<GenreLendingsPerMonthDTO> getLendingsAverageDurationPerMonth(LocalDate startDate, LocalDate endDate) {
     MatchOperation match = match(Criteria.where("startDate").gte(toStartOfDay(startDate))

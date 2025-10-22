@@ -15,11 +15,9 @@ public class ReaderDoc {
   @Id
   private String id;
 
-  /** natural key "YYYY/seq" */
   @Indexed(unique = true)
   private String readerNumber;
 
-  /** denormalized user info for quick lookups */
   private Long userId;
   @Indexed
   private String username;
@@ -33,10 +31,8 @@ public class ReaderDoc {
   private boolean marketingConsent;
   private boolean thirdPartySharingConsent;
 
-  /** list of genre names */
   private List<String> interestGenres;
 
-  /** stored file name (if any) */
   private String photoFile;
 
   @Version

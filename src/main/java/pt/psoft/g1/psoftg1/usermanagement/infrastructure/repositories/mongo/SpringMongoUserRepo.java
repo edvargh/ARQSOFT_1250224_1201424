@@ -13,9 +13,7 @@ public interface SpringMongoUserRepo extends MongoRepository<UserDoc, String> {
   Optional<UserDoc> findByUserId(Long userId);
   Optional<UserDoc> findByUsername(String username);
 
-  // exact name
   List<UserDoc> findByFullName(String fullName);
 
-  // regex / contains
   List<UserDoc> findByFullNameRegex(String fullNameRegex);
 }
