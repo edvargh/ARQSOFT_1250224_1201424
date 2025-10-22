@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @Configuration
-@Profile("sql")
+@Profile("mysql")
 @EnableJpaRepositories(basePackages = {
     "pt.psoft.g1.psoftg1.**.infraestructure.repositories.impl",
     "pt.psoft.g1.psoftg1.**.infrastructure.repositories.impl"

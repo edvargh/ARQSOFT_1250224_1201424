@@ -18,6 +18,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import pt.psoft.g1.psoftg1.bookmanagement.model.Book;
 import pt.psoft.g1.psoftg1.bookmanagement.services.BookService;
 import pt.psoft.g1.psoftg1.bookmanagement.services.CreateBookRequest;
+import pt.psoft.g1.psoftg1.bookmanagement.services.IsbnLookupService;
 import pt.psoft.g1.psoftg1.bookmanagement.services.SearchBooksQuery;
 import pt.psoft.g1.psoftg1.bookmanagement.services.UpdateBookRequest;
 import pt.psoft.g1.psoftg1.exceptions.ConflictException;
@@ -50,6 +51,7 @@ public class BookController {
     private final FileStorageService fileStorageService;
     private final UserService userService;
     private final ReaderService readerService;
+    private final IsbnLookupService isbnLookupService;
 
     private final BookViewMapper bookViewMapper;
 
@@ -241,6 +243,20 @@ public class BookController {
             @RequestBody final SearchRequest<SearchBooksQuery> request) {
         final var bookList = bookService.searchBooks(request.getPage(), request.getQuery());
         return new ListResponse<>(bookViewMapper.toBookView(bookList));
+    }
+
+    @Operation(summary = "Lookup ISBN(s) by title using external providers (Google/OpenLibrary)")
+    @GetMapping("/isbn")
+    public ResponseEntity<pt.psoft.g1.psoftg1.bookmanagement.services.IsbnLookupResult> lookupIsbnByTitle(
+        @RequestParam("title") String title,
+        @RequestParam(value = "mode", defaultValue = "ANY") pt.psoft.g1.psoftg1.bookmanagement.services.IsbnLookupMode mode) {
+
+        var result = isbnLookupService.getIsbnsByTitle(title, mode);
+
+        if (result.allIsbns().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        return ResponseEntity.ok(result);
     }
 }
 
