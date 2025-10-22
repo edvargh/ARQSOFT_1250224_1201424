@@ -1,12 +1,24 @@
 spring:
-  profiles:
-    group:
-      mongo-redis: mongo,redis
+  config:
+    activate:
+      on-profile: mongo
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.sql.init.SqlInitializationAutoConfiguration
 
   data:
     mongodb:
       uri: mongodb://localhost:27017/library
       database: library
+    jpa:
+      repositories:
+        enabled: false
+  sql:
+    init:
+      mode: never
 
 logging:
   level:
