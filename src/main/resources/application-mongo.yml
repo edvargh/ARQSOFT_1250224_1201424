@@ -1,0 +1,13 @@
+spring:
+  profiles:
+    group:
+      mongo-redis: mongo,redis
+
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/library
+      database: library
+
+logging:
+  level:
+    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
