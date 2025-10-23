@@ -27,28 +27,47 @@ public class IsbnLookupService {
   }
 
   public IsbnLookupResult getIsbnsByTitle(String title, IsbnLookupMode mode) {
-    String key = "isbn:title:" + normalizeTitleKey(title) + ":mode:" + mode.name().toLowerCase();
+    // choose providers first
+    List<IsbnProvider> selected = selectProviders(mode);
+
+    // create a stable providers signature for the cache key
+    String providersKey = selected.stream()
+        .map(IsbnProvider::getName)
+        .sorted()                       // stable order
+        .collect(Collectors.joining("+"));
+
+    String key = "isbn:title:" + normalizeTitleKey(title)
+        + ":mode:" + mode.name().toLowerCase()
+        + ":providers:" + providersKey;
 
     String cached = redis.opsForValue().get(key);
     if (cached != null && !cached.isBlank()) {
-      List<String> list = Arrays.stream(cached.split(",")).map(String::trim).filter(s -> !s.isBlank()).toList();
+      List<String> list = Arrays.stream(cached.split(","))
+          .map(String::trim).filter(s -> !s.isBlank()).toList();
       return IsbnLookupResult.from(title, list, Set.of("cache"), mode, true);
     }
 
-    List<CompletableFuture<ProviderResult>> futures = providers.stream()
+    if (selected.isEmpty()) {
+      return IsbnLookupResult.from(title, List.of(), Set.of(), mode, false);
+    }
+
+    List<CompletableFuture<ProviderResult>> futures = selected.stream()
         .map(p -> CompletableFuture.supplyAsync(() -> safeCall(p, title), isbnLookupExecutor)
             .orTimeout(3, TimeUnit.SECONDS)
-            .exceptionally(ex -> new ProviderResult(p.getName(), List.of())))
+            .exceptionally(ex -> new ProviderResult(p.getName(), List.of())) )
         .toList();
 
     List<ProviderResult> results = futures.stream().map(CompletableFuture::join).toList();
 
-    List<List<String>> lists = results.stream().map(r -> r.isbns()).toList();
-    Set<String> usedSources = results.stream().filter(r -> !r.isbns().isEmpty())
-        .map(ProviderResult::name).collect(Collectors.toCollection(LinkedHashSet::new));
+    List<List<String>> lists = results.stream().map(ProviderResult::isbns).toList();
+    Set<String> usedSources = results.stream()
+        .filter(r -> !r.isbns().isEmpty())
+        .map(ProviderResult::name)
+        .collect(Collectors.toCollection(LinkedHashSet::new));
 
     List<String> merged = switch (mode) {
-      case ANY -> normalizeAndOrder(results.stream().flatMap(r -> r.isbns().stream()).toList());
+      case ANY, GOOGLE_ONLY, OPENLIBRARY_ONLY ->
+          normalizeAndOrder(results.stream().flatMap(r -> r.isbns().stream()).toList());
       case BOTH -> atLeastTwoAgree(lists);
     };
 
@@ -58,6 +77,7 @@ public class IsbnLookupService {
     return IsbnLookupResult.from(title, merged, usedSources, mode, false);
   }
 
+
   private ProviderResult safeCall(IsbnProvider p, String title) {
     try {
       List<String> raw = Optional.ofNullable(p.findIsbnsByTitle(title)).orElse(List.of());
@@ -65,6 +85,18 @@ public class IsbnLookupService {
     } catch (Exception e) {
       return new ProviderResult(p.getName(), List.of());
     }
+  }
+
+  private List<IsbnProvider> selectProviders(IsbnLookupMode mode) {
+    return switch (mode) {
+      case GOOGLE_ONLY -> providers.stream()
+          .filter(p -> "google-books".equals(p.getName()))
+          .toList();
+      case OPENLIBRARY_ONLY -> providers.stream()
+          .filter(p -> "openlibrary".equals(p.getName()))
+          .toList();
+      default -> providers;
+    };
   }
 
   private record ProviderResult(String name, List<String> isbns) {}

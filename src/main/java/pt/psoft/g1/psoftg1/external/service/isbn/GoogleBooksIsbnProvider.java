@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
+@org.springframework.context.annotation.Profile("isbn-google")
 public class GoogleBooksIsbnProvider implements IsbnProvider {
 
   private final HttpClient http = HttpClient.newBuilder()
