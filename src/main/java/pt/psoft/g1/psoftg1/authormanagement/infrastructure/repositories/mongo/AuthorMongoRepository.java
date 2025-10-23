@@ -31,8 +31,8 @@ public class AuthorMongoRepository implements AuthorRepository {
   }
 
   @Override
-  public Optional<Author> findByAuthorNumber(Long authorNumber) {
-    return repo.findByAuthorNumber(authorNumber).map(mapper::toDomain);
+  public Optional<Author> findByAuthorNumber(String authorId) {
+    return repo.findById(authorId).map(mapper::toDomain);
   }
 
   @Override
@@ -51,11 +51,9 @@ public class AuthorMongoRepository implements AuthorRepository {
 
   @Override
   public Author save(Author author) {
-    var doc = mapper.toDoc(author);
-    if (doc.getAuthorNumber() == null) {
-      doc.setAuthorNumber(System.currentTimeMillis());
-    }
-    var saved = repo.save(doc);
+    if (author == null || author.getId() == null || author.getId().isBlank())
+      throw new IllegalStateException("Author id must be assigned before saving");
+    var saved = repo.save(mapper.toDoc(author));
     return mapper.toDomain(saved);
   }
 
@@ -66,44 +64,26 @@ public class AuthorMongoRepository implements AuthorRepository {
 
   @Override
   public Page<AuthorLendingView> findTopAuthorByLendings(Pageable pageable) {
-    MatchOperation matchReturned = match(new Criteria());
-    LookupOperation lookupBooks = LookupOperation.newLookup()
-        .from("books")
-        .localField("bookIsbn")
-        .foreignField("isbn")
-        .as("book");
+    LookupOperation lookupBooks = lookup("books", "bookIsbn", "isbn", "book");
     UnwindOperation unwindBook = unwind("book");
-    UnwindOperation unwindAuthors = unwind("book.authors");
-    LookupOperation lookupAuthors = LookupOperation.newLookup()
-        .from("authors")
-        .localField("book.authors")
-        .foreignField("authorNumber")
-        .as("author");
+    UnwindOperation unwindAuthors = unwind("book.authorIds");
+    LookupOperation lookupAuthors = lookup("authors", "book.authorIds", "_id", "author");
     UnwindOperation unwindAuthor = unwind("author");
 
-    GroupOperation groupByAuthor = group("author.authorNumber")
+    GroupOperation groupByAuthor = group("author._id")
         .first("author.name").as("name")
         .count().as("lendingCount");
 
-    SortOperation sortByCountDesc = sort(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "lendingCount"));
+    SortOperation sortByCountDesc = sort(org.springframework.data.domain.Sort.Direction.DESC, "lendingCount");
     SkipOperation skip = skip((long) pageable.getPageNumber() * pageable.getPageSize());
     LimitOperation limit = limit(pageable.getPageSize());
 
     Aggregation agg = newAggregation(
-        matchReturned,
-        lookupBooks,
-        unwindBook,
-        unwindAuthors,
-        lookupAuthors,
-        unwindAuthor,
-        groupByAuthor,
-        sortByCountDesc,
-        skip,
-        limit
+        lookupBooks, unwindBook, unwindAuthors, lookupAuthors, unwindAuthor,
+        groupByAuthor, sortByCountDesc, skip, limit
     );
 
-    AggregationResults<AuthorLendingAgg> results =
-        mongoTemplate.aggregate(agg, "lendings", AuthorLendingAgg.class);
+    var results = mongoTemplate.aggregate(agg, "lendings", AuthorLendingAgg.class);
 
     var content = results.getMappedResults().stream()
         .map(r -> new AuthorLendingView(r.name(), r.lendingCount()))
@@ -115,20 +95,17 @@ public class AuthorMongoRepository implements AuthorRepository {
   @Override
   public void delete(Author author) {
     if (author == null || author.getId() == null) return;
-    repo.findByAuthorNumber(author.getId()).ifPresent(a -> repo.deleteById(a.getId()));
+    repo.deleteById(author.getId());
   }
 
   @Override
-  public List<Author> findCoAuthorsByAuthorNumber(Long authorNumber) {
-    MatchOperation matchBooks = match(Criteria.where("authors").is(authorNumber));
-    UnwindOperation unwindAuthors = unwind("authors");
-    MatchOperation matchCoauthors = match(Criteria.where("authors").ne(authorNumber));
-    GroupOperation groupDistinct = group("authors"); // distinct authorNumbers
-    LookupOperation lookupAuthors = LookupOperation.newLookup()
-        .from("authors")
-        .localField("_id")
-        .foreignField("authorNumber")
-        .as("author");
+  public List<Author> findCoAuthorsByAuthorNumber(String authorId) {
+    MatchOperation matchBooks = match(Criteria.where("authorIds").is(authorId));
+    UnwindOperation unwindAuthors = unwind("authorIds");
+    MatchOperation matchCoauthors = match(Criteria.where("authorIds").ne(authorId));
+    GroupOperation groupDistinct = group("authorIds"); // distinct coauthor ids
+    ProjectionOperation projectIds = project().and("_id").as("authorId");
+    LookupOperation lookupCoauthors = lookup("authors", "authorId", "_id", "author");
     UnwindOperation unwindAuthor = unwind("author");
 
     Aggregation agg = newAggregation(
@@ -136,13 +113,12 @@ public class AuthorMongoRepository implements AuthorRepository {
         unwindAuthors,
         matchCoauthors,
         groupDistinct,
-        lookupAuthors,
+        projectIds,
+        lookupCoauthors,
         unwindAuthor
     );
 
-    AggregationResults<CoAuthorAgg> results =
-        mongoTemplate.aggregate(agg, "books", CoAuthorAgg.class);
-
+    var results = mongoTemplate.aggregate(agg, "books", CoAuthorAgg.class);
     return results.getMappedResults().stream()
         .map(CoAuthorAgg::author)
         .map(mapper::toDomain)
@@ -150,5 +126,5 @@ public class AuthorMongoRepository implements AuthorRepository {
   }
 
   private record AuthorLendingAgg(String name, long lendingCount) {}
-  private record CoAuthorAgg(Long _id, AuthorDoc author) {}
+  private record CoAuthorAgg(AuthorDoc author) {}
 }

@@ -9,3 +9,10 @@
 # Commands for Google Books API and Open Library Search API: 
 - mvn spring-boot:run -D"spring-boot.run.profiles=mongo,redis,isbn-google-only" (powershell)
 - mvn spring-boot:run -D"spring-boot.run.profiles=mongo,redis,isbn-openlibrary-only" (powershell)
+
+# Commands for base64 and timestamp id generation:
+- # Base64
+mvn spring-boot:run -D"spring-boot.run.profiles=mongo,redis,isbn-openlibrary-only,id-base64"
+
+# Timestamp/ULID-like
+mvn spring-boot:run -D"spring-boot.run.profiles=mongo,redis,isbn-openlibrary-only,id-ts"
