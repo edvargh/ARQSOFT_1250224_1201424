@@ -22,7 +22,7 @@ import pt.psoft.g1.psoftg1.lendingmanagement.model.Lending;
 import java.time.LocalDate;
 import java.util.*;
 
-public interface SpringDataGenreRepository extends GenreRepository, GenreRepoCustom, CrudRepository<Genre, Integer> {
+public interface SpringDataGenreRepository extends GenreRepository, GenreRepoCustom, CrudRepository<Genre, String> {
 
     @Query("SELECT g FROM Genre g")
     List<Genre> findAllGenres();
