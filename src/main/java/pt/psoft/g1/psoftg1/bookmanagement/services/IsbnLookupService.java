@@ -27,7 +27,18 @@ public class IsbnLookupService {
   }
 
   public IsbnLookupResult getIsbnsByTitle(String title, IsbnLookupMode mode) {
-    String key = "isbn:title:" + normalizeTitleKey(title) + ":mode:" + mode.name().toLowerCase();
+    // choose providers first
+    List<IsbnProvider> selected = selectProviders(mode);
+
+    // create a stable providers signature for the cache key
+    String providersKey = selected.stream()
+        .map(IsbnProvider::getName)
+        .sorted()                       // stable order
+        .collect(Collectors.joining("+"));
+
+    String key = "isbn:title:" + normalizeTitleKey(title)
+        + ":mode:" + mode.name().toLowerCase()
+        + ":providers:" + providersKey;
 
     String cached = redis.opsForValue().get(key);
     if (cached != null && !cached.isBlank()) {
@@ -36,8 +47,6 @@ public class IsbnLookupService {
       return IsbnLookupResult.from(title, list, Set.of("cache"), mode, true);
     }
 
-    List<IsbnProvider> selected = selectProviders(mode);
-
     if (selected.isEmpty()) {
       return IsbnLookupResult.from(title, List.of(), Set.of(), mode, false);
     }
@@ -45,7 +54,7 @@ public class IsbnLookupService {
     List<CompletableFuture<ProviderResult>> futures = selected.stream()
         .map(p -> CompletableFuture.supplyAsync(() -> safeCall(p, title), isbnLookupExecutor)
             .orTimeout(3, TimeUnit.SECONDS)
-            .exceptionally(ex -> new ProviderResult(p.getName(), List.of())))
+            .exceptionally(ex -> new ProviderResult(p.getName(), List.of())) )
         .toList();
 
     List<ProviderResult> results = futures.stream().map(CompletableFuture::join).toList();
@@ -67,6 +76,7 @@ public class IsbnLookupService {
     }
     return IsbnLookupResult.from(title, merged, usedSources, mode, false);
   }
+
 
   private ProviderResult safeCall(IsbnProvider p, String title) {
     try {

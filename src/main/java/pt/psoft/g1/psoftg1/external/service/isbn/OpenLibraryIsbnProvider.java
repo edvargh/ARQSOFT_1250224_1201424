@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Locale;
 
 @Component
+@org.springframework.context.annotation.Profile("isbn-openlibrary")
 public class OpenLibraryIsbnProvider implements IsbnProvider {
 
   private final HttpClient http = HttpClient.newBuilder()
