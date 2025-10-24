@@ -7,9 +7,9 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 public interface SpringMongoAuthorRepo extends MongoRepository<AuthorDoc, String> {
 
-  Optional<AuthorDoc> findByAuthorNumber(Long authorNumber);
-
   List<AuthorDoc> findByNameStartsWithIgnoreCase(String name);
 
   List<AuthorDoc> findByNameIgnoreCase(String name);
+
+  Optional<AuthorDoc> findOneByNameIgnoreCase(String name); // optional convenience method
 }

@@ -55,10 +55,9 @@ public class User implements UserDetails {
 
 	// database primary key
 	@Id
-	@GeneratedValue
+	@Column(name="USER_ID", length = 36, nullable = false, updatable = false)
 	@Getter
-	@Column(name="USER_ID")
-	private Long id;
+	private String id;
 
 	// optimistic lock concurrency control
 	@Version
@@ -189,5 +188,10 @@ public class User implements UserDetails {
 
 	public void setName(String name){
 		this.name = new Name(name);
+	}
+
+	public void assignId(String id) {
+		if (id == null || id.isBlank()) throw new IllegalArgumentException("id cannot be blank");
+		this.id = id;
 	}
 }

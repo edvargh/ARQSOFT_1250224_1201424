@@ -15,8 +15,8 @@ import java.util.Objects;
 @Entity
 public class Fine {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long pk;
+    @Column(name = "FINE_ID", length = 36, nullable = false, updatable = false)
+    private String id;
 
     @PositiveOrZero
     @Column(updatable = false)
@@ -44,6 +44,19 @@ public class Fine {
         this.lending = Objects.requireNonNull(lending);
     }
 
+    public Fine(Lending lending, int fineValuePerDayInCents, int centsValue) {
+        this.lending = Objects.requireNonNull(lending);
+        this.fineValuePerDayInCents = Math.max(0, fineValuePerDayInCents);
+        this.centsValue = Math.max(0, centsValue);
+    }
+
     /**Protected empty constructor for ORM only.*/
     protected Fine() {}
+
+    public String getId() { return id; }
+
+    public void assignId(String id) {
+        if (id == null || id.isBlank()) throw new IllegalArgumentException("id cannot be blank");
+        this.id = id;
+    }
 }

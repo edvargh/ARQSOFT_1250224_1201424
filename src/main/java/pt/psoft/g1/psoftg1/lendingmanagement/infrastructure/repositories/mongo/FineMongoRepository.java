@@ -23,9 +23,10 @@ public class FineMongoRepository implements FineRepository {
   @Override
   public Optional<Fine> findByLendingNumber(String lendingNumber) {
     return fineRepo.findByLendingId(lendingNumber).flatMap(doc -> {
-      Optional<Lending> lending = lendingRepository.findByLendingNumber(lendingNumber);
+      var lending = lendingRepository.findByLendingNumber(lendingNumber);
       if (lending.isEmpty()) return Optional.empty();
-      Fine f = new Fine(lending.get());
+      Fine f = new Fine(lending.get(), doc.getFineValuePerDayInCents(), doc.getCentsValue());
+      f.assignId(doc.getId());
       return Optional.of(f);
     });
   }
@@ -34,7 +35,11 @@ public class FineMongoRepository implements FineRepository {
   public Iterable<Fine> findAll() {
     List<Fine> out = new ArrayList<>();
     fineRepo.findAll().forEach(doc -> {
-      lendingRepository.findByLendingNumber(doc.getLendingId()).ifPresent(l -> out.add(new Fine(l)));
+      lendingRepository.findByLendingNumber(doc.getLendingId()).ifPresent(l -> {
+        Fine f = new Fine(l, doc.getFineValuePerDayInCents(), doc.getCentsValue());
+        f.assignId(doc.getId());
+        out.add(f);
+      });
     });
     return out;
   }
@@ -42,6 +47,7 @@ public class FineMongoRepository implements FineRepository {
   @Override
   public Fine save(Fine fine) {
     FineDoc doc = FineDoc.builder()
+        .id(fine.getId())
         .lendingId(fine.getLending().getLendingNumber())
         .fineValuePerDayInCents(fine.getFineValuePerDayInCents())
         .centsValue(fine.getCentsValue())

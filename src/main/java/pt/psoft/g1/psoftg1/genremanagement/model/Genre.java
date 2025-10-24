@@ -9,9 +9,12 @@ import lombok.Getter;
 public class Genre {
     @Transient
     private final int GENRE_MAX_LENGTH = 100;
+
     @Id
-    @GeneratedValue(strategy= GenerationType.AUTO)
-    long pk;
+    @Column(name = "pk", length = 36, nullable = false, updatable = false,
+        columnDefinition = "varchar(36)")
+    @Getter
+    private String pk;
 
     @Size(min = 1, max = GENRE_MAX_LENGTH, message = "Genre name must be between 1 and 100 characters")
     @Column(unique=true, nullable=false, length = GENRE_MAX_LENGTH)
@@ -22,6 +25,12 @@ public class Genre {
 
     public Genre(String genre) {
         setGenre(genre);
+    }
+
+    /** Assign once on create (called by the service). */
+    public void assignPk(String id) {
+        if (id == null || id.isBlank()) throw new IllegalArgumentException("id cannot be blank");
+        this.pk = id;
     }
 
     private void setGenre(String genre) {

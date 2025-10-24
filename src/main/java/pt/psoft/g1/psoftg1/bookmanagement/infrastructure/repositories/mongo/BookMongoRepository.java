@@ -39,14 +39,16 @@ public class BookMongoRepository implements BookRepository {
     Genre genre = genreRepo.findByString(d.getGenre())
         .orElseThrow(() -> new IllegalArgumentException("Genre not found: " + d.getGenre()));
 
-    List<Author> authors = d.getAuthorNumbers() == null ? List.of() :
-        d.getAuthorNumbers().stream()
+    List<Author> authors = d.getAuthorIds() == null ? List.of() :
+        d.getAuthorIds().stream()
             .map(authorRepo::findByAuthorNumber)
             .filter(Optional::isPresent)
             .map(Optional::get)
             .toList();
 
-    return new Book(d.getIsbn(), d.getTitle(), d.getDescription(), genre, authors, null);
+    Book b = new Book(d.getIsbn(), d.getTitle(), d.getDescription(), genre, authors, d.getPhotoFile());
+    b.assignPk(d.getId());
+    return b;
   }
 
   private List<Book> mapAll(List<BookDoc> docs) {
@@ -136,9 +138,9 @@ public class BookMongoRepository implements BookRepository {
   }
 
   @Override
-  public List<Book> findBooksByAuthorNumber(Long authorNumber) {
+  public List<Book> findBooksByAuthorNumber(String authorNumber) {
     if (authorNumber == null) return List.of();
-    Query q = new Query(Criteria.where("authorNumbers").is(authorNumber));
+    Query q = new Query(Criteria.where("authorIds").is(authorNumber));
     List<BookDoc> docs = mongo.find(q, BookDoc.class);
     return mapAll(docs);
   }
@@ -171,27 +173,17 @@ public class BookMongoRepository implements BookRepository {
 
   @Override
   public Book save(Book book) {
-    var doc = BookDoc.builder()
-        .isbn(book.getIsbn())
-        .title(book.getTitle().getTitle())
-        .description(book.getDescription())
-        .genre(book.getGenre().toString())
-        .authorNumbers(book.getAuthors().stream().map(Author::getId).toList())
-        .authorNames(book.getAuthors().stream().map(Author::getName).toList())
-        .photoFile(book.getPhoto() == null ? null : book.getPhoto().getPhotoFile())
-        .build();
-
-    var saved = repo.findByIsbn(book.getIsbn())
-        .map(existing -> { doc.setId(existing.getId()); return repo.save(doc); })
-        .orElseGet(() -> repo.save(doc));
-
+    if (book == null || book.getPk() == null || book.getPk().isBlank()) {
+      throw new IllegalStateException("Book pk must be assigned before saving");
+    }
+    var saved = repo.save(mapper.toDoc(book));
     return toDomain(saved);
   }
 
   @Override
   public void delete(Book book) {
-    if (book == null) return;
-    repo.findByIsbn(book.getIsbn()).ifPresent(d -> repo.deleteById(d.getId()));
+    if (book == null || book.getPk() == null || book.getPk().isBlank()) return;
+    repo.deleteById(book.getPk());
   }
 
   private record BookCountAgg(String _id, long lendingCount, BookDoc book) {}

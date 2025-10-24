@@ -18,7 +18,7 @@ public class ReaderDoc {
   @Indexed(unique = true)
   private String readerNumber;
 
-  private Long userId;
+  private String userId;
   @Indexed
   private String username;
   private String fullName;

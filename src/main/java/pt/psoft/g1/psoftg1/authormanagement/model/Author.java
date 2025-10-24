@@ -12,10 +12,9 @@ import pt.psoft.g1.psoftg1.shared.model.Name;
 @Entity
 public class Author extends EntityWithPhoto {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "AUTHOR_NUMBER")
+    @Column(name = "AUTHOR_NUMBER", length = 36, nullable = false, updatable = false)
     @Getter
-    private Long authorNumber;
+    private String authorNumber;
 
     @Version
     private long version;
@@ -39,7 +38,7 @@ public class Author extends EntityWithPhoto {
     }
 
     @JsonIgnore
-    public Long getId() {
+    public String getId() {
         return authorNumber;
     }
 
@@ -72,6 +71,12 @@ public class Author extends EntityWithPhoto {
 
         setPhotoInternal(null);
     }
+
+    public void assignId(String id) {
+        if (id == null || id.isBlank()) throw new IllegalArgumentException("id cannot be blank");
+        this.authorNumber = id;
+    }
+
     public String getName() {
         return this.name.toString();
     }

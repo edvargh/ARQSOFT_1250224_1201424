@@ -41,7 +41,7 @@ public class UserTestDataFactory {
     }
 
     @Transactional
-    public void deleteUser(final Long id) {
+    public void deleteUser(final String id) {
         userService.delete(id);
     }
 

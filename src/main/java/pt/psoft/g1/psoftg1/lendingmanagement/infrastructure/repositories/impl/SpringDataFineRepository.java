@@ -11,10 +11,12 @@ import java.util.Optional;
 public interface SpringDataFineRepository extends FineRepository, CrudRepository<Fine, Long> {
 
     @Override
-    @Query("SELECT f " +
-            "FROM Fine f " +
-            "JOIN Lending l ON f.lending.pk = l.pk " +
-            "WHERE l.lendingNumber.lendingNumber = :lendingNumber")
+    @Query("""
+           SELECT f
+           FROM Fine f
+           JOIN f.lending l
+           WHERE l.lendingNumber.lendingNumber = :lendingNumber
+           """)
     Optional<Fine> findByLendingNumber(String lendingNumber);
 
 }

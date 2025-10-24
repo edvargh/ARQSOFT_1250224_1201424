@@ -57,19 +57,19 @@ public class UserAdminApi {
 	}
 
 	@PutMapping("{id}")
-	public UserView update(@PathVariable final Long id, @RequestBody @Valid final EditUserRequest request) {
+	public UserView update(@PathVariable final String id, @RequestBody @Valid final EditUserRequest request) {
 		final var user = userService.update(id, request);
 		return userViewMapper.toUserView(user);
 	}
 
 	@DeleteMapping("{id}")
-	public UserView delete(@PathVariable final Long id) {
+	public UserView delete(@PathVariable final String id) {
 		final var user = userService.delete(id);
 		return userViewMapper.toUserView(user);
 	}
 
 	@GetMapping("{id}")
-	public UserView get(@PathVariable final Long id) {
+	public UserView get(@PathVariable final String id) {
 		final var user = userService.getUser(id);
 		return userViewMapper.toUserView(user);
 	}

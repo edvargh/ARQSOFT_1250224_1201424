@@ -22,7 +22,7 @@ public class UserMongoMapper {
     u.getAuthorities().forEach(r -> roles.add(r.getAuthority()));
 
     return UserDoc.builder()
-        .userId(u.getId())
+        .id(u.getId())
         .username(u.getUsername())
         .password(extractPasswordUnsafe(u))
         .fullName(u.getName() == null ? null : u.getName().toString())
@@ -67,7 +67,7 @@ public class UserMongoMapper {
     try {
       Field fid = User.class.getDeclaredField("id");
       fid.setAccessible(true);
-      fid.set(u, d.getUserId());
+      fid.set(u, d.getId());
     } catch (Exception ignored) {}
 
     return u;

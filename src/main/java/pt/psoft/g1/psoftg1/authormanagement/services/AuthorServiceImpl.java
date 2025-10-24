@@ -12,6 +12,7 @@ import pt.psoft.g1.psoftg1.authormanagement.repositories.AuthorRepository;
 import pt.psoft.g1.psoftg1.bookmanagement.model.Book;
 import pt.psoft.g1.psoftg1.bookmanagement.repositories.BookRepository;
 import pt.psoft.g1.psoftg1.exceptions.NotFoundException;
+import pt.psoft.g1.psoftg1.shared.id.IdGenerator;
 import pt.psoft.g1.psoftg1.shared.repositories.PhotoRepository;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class AuthorServiceImpl implements AuthorService {
     private final BookRepository bookRepository;
     private final AuthorMapper mapper;
     private final PhotoRepository photoRepository;
+    private final IdGenerator idGenerator;
 
     @Override
     public Iterable<Author> findAll() {
@@ -31,9 +33,9 @@ public class AuthorServiceImpl implements AuthorService {
     }
 
     @Override
-    @Cacheable(value = "authorById", key = "#authorNumber")
-    public Optional<Author> findByAuthorNumber(final Long authorNumber) {
-        return authorRepository.findByAuthorNumber(authorNumber);
+    @Cacheable(value = "authorById", key = "#authorId")
+    public Optional<Author> findByAuthorNumber(final String authorId) {
+        return authorRepository.findByAuthorNumber(authorId);
     }
 
     @Override
@@ -64,41 +66,17 @@ public class AuthorServiceImpl implements AuthorService {
             resource.setPhotoURI(null);
         }
         final Author author = mapper.create(resource);
+        author.assignId(idGenerator.newId());
+
         return authorRepository.save(author);
     }
 
     @Override
     @CacheEvict(value = {"authorById","authorSearch"}, allEntries = true)
-    public Author partialUpdate(final Long authorNumber, final UpdateAuthorRequest request, final long desiredVersion) {
-        // first let's check if the object exists so we don't create a new object with
-        // save
-        final var author = findByAuthorNumber(authorNumber)
-                .orElseThrow(() -> new NotFoundException("Cannot update an object that does not yet exist"));
-        /*
-         * Since photos can be null (no photo uploaded) that means the URI can be null as well.
-         * To avoid the client sending false data, photoURI has to be set to any value / null
-         * according to the MultipartFile photo object
-         *
-         * That means:
-         * - photo = null && photoURI = null -> photo is removed
-         * - photo = null && photoURI = validString -> ignored
-         * - photo = validFile && photoURI = null -> ignored
-         * - photo = validFile && photoURI = validString -> photo is set
-         * */
-
-        MultipartFile photo = request.getPhoto();
-        String photoURI = request.getPhotoURI();
-        if(photo == null && photoURI != null || photo != null && photoURI == null) {
-            request.setPhoto(null);
-            request.setPhotoURI(null);
-        }
-        // since we got the object from the database we can check the version in memory
-        // and apply the patch
+    public Author partialUpdate(final String authorId, final UpdateAuthorRequest request, final long desiredVersion) {
+        final var author = findByAuthorNumber(authorId)
+            .orElseThrow(() -> new NotFoundException("Cannot update an object that does not yet exist"));
         author.applyPatch(desiredVersion, request);
-
-        // in the meantime some other user might have changed this object on the
-        // database, so concurrency control will still be applied when we try to save
-        // this updated object
         return authorRepository.save(author);
     }
     @Override
@@ -108,18 +86,18 @@ public class AuthorServiceImpl implements AuthorService {
     }
 
     @Override
-    public List<Book> findBooksByAuthorNumber(Long authorNumber){
-        return bookRepository.findBooksByAuthorNumber(authorNumber);
+    public List<Book> findBooksByAuthorNumber(String authorId){
+        return bookRepository.findBooksByAuthorNumber(authorId);
     }
 
     @Override
-    public List<Author> findCoAuthorsByAuthorNumber(Long authorNumber) {
-        return authorRepository.findCoAuthorsByAuthorNumber(authorNumber);
+    public List<Author> findCoAuthorsByAuthorNumber(String authorId) {
+        return authorRepository.findCoAuthorsByAuthorNumber(authorId);
     }
     @Override
     @CacheEvict(value = {"authorById","authorSearch"}, allEntries = true)
-    public Optional<Author> removeAuthorPhoto(Long authorNumber, long desiredVersion) {
-        Author author = authorRepository.findByAuthorNumber(authorNumber)
+    public Optional<Author> removeAuthorPhoto(String authorId, long desiredVersion) {
+        Author author = authorRepository.findByAuthorNumber(authorId)
                 .orElseThrow(() -> new NotFoundException("Cannot find reader"));
 
         String photoFile = author.getPhoto().getPhotoFile();

@@ -15,9 +15,6 @@ public class UserDoc {
   private String id;
 
   @Indexed(unique = true)
-  private Long userId;
-
-  @Indexed(unique = true)
   private String username;
 
   private String password;

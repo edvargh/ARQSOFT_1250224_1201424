@@ -10,7 +10,7 @@ import java.util.Optional;
 @Repository
 @Profile("mongo")
 public interface SpringMongoUserRepo extends MongoRepository<UserDoc, String> {
-  Optional<UserDoc> findByUserId(Long userId);
+  Optional<UserDoc> findById(String Id);
   Optional<UserDoc> findByUsername(String username);
 
   List<UserDoc> findByFullName(String fullName);

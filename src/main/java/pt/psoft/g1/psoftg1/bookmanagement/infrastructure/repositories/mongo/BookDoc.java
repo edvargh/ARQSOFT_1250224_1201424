@@ -21,7 +21,7 @@ public class BookDoc {
 
   private String genre;
 
-  private List<Long> authorNumbers;
+  private List<String> authorIds;
 
   private List<String> authorNames;
 

@@ -11,9 +11,9 @@ import pt.psoft.g1.psoftg1.authormanagement.repositories.AuthorRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface SpringDataAuthorRepository extends AuthorRepository, org.springframework.data.jpa.repository.JpaRepository<Author, Long> {
+public interface SpringDataAuthorRepository extends AuthorRepository, org.springframework.data.jpa.repository.JpaRepository<Author, String> {
     @Override
-    Optional<Author> findByAuthorNumber(Long authorNumber);
+    Optional<Author> findByAuthorNumber(String authorId);
 
     @Override
     @Query("SELECT new pt.psoft.g1.psoftg1.authormanagement.api.AuthorLendingView(a.name.name, COUNT(l.pk)) " +
@@ -28,6 +28,6 @@ public interface SpringDataAuthorRepository extends AuthorRepository, org.spring
             "JOIN b.authors coAuthor " +
             "WHERE b IN (SELECT b FROM Book b JOIN b.authors a WHERE a.authorNumber = :authorNumber) " +
             "AND coAuthor.authorNumber <> :authorNumber")
-    List<Author> findCoAuthorsByAuthorNumber(Long authorNumber);
+    List<Author> findCoAuthorsByAuthorNumber(String authorNumber);
 }
 

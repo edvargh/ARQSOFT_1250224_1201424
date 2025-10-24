@@ -12,7 +12,7 @@ import pt.psoft.g1.psoftg1.shared.services.Page;
  */
 public interface ReaderService {
     ReaderDetails create(CreateReaderRequest request, String photoURI);
-    ReaderDetails update(Long id, UpdateReaderRequest request, long desireVersion, String photoURI);
+    ReaderDetails update(String id, UpdateReaderRequest request, long desireVersion, String photoURI);
     Optional<ReaderDetails> findByUsername(final String username);
     Optional<ReaderDetails> findByReaderNumber(String readerNumber);
     List<ReaderDetails> findByPhoneNumber(String phoneNumber);

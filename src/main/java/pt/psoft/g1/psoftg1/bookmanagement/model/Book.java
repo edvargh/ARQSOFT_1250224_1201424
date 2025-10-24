@@ -21,8 +21,9 @@ import java.util.Objects;
 })
 public class Book extends EntityWithPhoto {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    long pk;
+    @Column(name = "BOOK_ID", length = 36, nullable = false, updatable = false)
+    @Getter
+    private String pk;
 
     @Version
     @Getter
@@ -123,5 +124,10 @@ public class Book extends EntityWithPhoto {
 
     public String getIsbn(){
         return this.isbn.toString();
+    }
+
+    public void assignPk(String id) {
+        if (id == null || id.isBlank()) throw new IllegalArgumentException("id cannot be blank");
+        this.pk = id;
     }
 }

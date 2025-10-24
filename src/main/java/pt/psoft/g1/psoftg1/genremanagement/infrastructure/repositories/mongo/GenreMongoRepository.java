@@ -30,10 +30,17 @@ public class GenreMongoRepository implements GenreRepository {
   private final SpringMongoGenreRepo repo;
   private final MongoTemplate mongo;
 
-  private Genre toDomain(GenreDoc d) { return new Genre(d.getGenre()); }
+  private Genre toDomain(GenreDoc d) {
+    var g = new Genre(d.getGenre());
+    g.assignPk(d.getId());
+    return g;
+  }
 
   private GenreDoc toDoc(Genre g) {
-    return GenreDoc.builder().genre(g.toString()).build();
+    return GenreDoc.builder()
+        .id(g.getPk())
+        .genre(g.toString())
+        .build();
   }
 
   private Date toStartOfDay(LocalDate d) {
@@ -57,9 +64,10 @@ public class GenreMongoRepository implements GenreRepository {
 
   @Override
   public Genre save(Genre genre) {
-    var saved = repo.findByGenre(genre.toString())
-        .map(existing -> { existing.setGenre(genre.toString()); return repo.save(existing); })
-        .orElseGet(() -> repo.save(toDoc(genre)));
+    if (genre.getPk() == null || genre.getPk().isBlank()) {
+      throw new IllegalStateException("Genre pk must be assigned before saving");
+    }
+    var saved = repo.save(toDoc(genre));
     return toDomain(saved);
   }
 

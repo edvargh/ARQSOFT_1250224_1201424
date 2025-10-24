@@ -12,22 +12,28 @@ public class BookMongoMapper {
 
   public BookDoc toDoc(Book b) {
     return BookDoc.builder()
-        .id(null)
+        .id(b.getPk())
         .isbn(b.getIsbn())
         .title(b.getTitle().getTitle())
         .description(b.getDescription())
         .genre(b.getGenre().toString())
-        .authorNumbers(b.getAuthors().stream().map(a -> a.getId()).toList())
+        .authorIds(b.getAuthors().stream().map(Author::getId).toList())
         .authorNames(b.getAuthors().stream().map(Author::getName).toList())
         .photoFile(b.getPhoto() == null ? null : b.getPhoto().getPhotoFile())
         .build();
   }
 
-  public BookDoc toDocShallow(String isbn, String title, String description, String genre,
-      List<Long> authorNumbers, List<String> authorNames, String photoFile) {
+  public BookDoc toDocShallow(String id, String isbn, String title, String description, String genre,
+      List<String> authorIds, List<String> authorNames, String photoFile) {
     return BookDoc.builder()
-        .isbn(isbn).title(title).description(description).genre(genre)
-        .authorNumbers(authorNumbers).authorNames(authorNames).photoFile(photoFile)
+        .id(id)
+        .isbn(isbn)
+        .title(title)
+        .description(description)
+        .genre(genre)
+        .authorIds(authorIds)
+        .authorNames(authorNames)
+        .photoFile(photoFile)
         .build();
   }
 }
