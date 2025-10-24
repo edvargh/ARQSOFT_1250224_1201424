@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public interface SpringDataBookRepository  extends BookRepository, BookRepoCustom, CrudRepository<Book, Long> {
+public interface SpringDataBookRepository  extends BookRepository, BookRepoCustom, CrudRepository<Book, String> {
 
     @Query("SELECT b " +
             "FROM Book b " +
@@ -66,7 +66,7 @@ public interface SpringDataBookRepository  extends BookRepository, BookRepoCusto
       JOIN author a ON ba.authors_author_number = a.author_number
       WHERE a.author_number = :authorNumber
     """, nativeQuery = true)
-    List<Book> findBooksByAuthorNumber(Long authorNumber);
+    List<Book> findBooksByAuthorNumber(@Param("authorNumber") String authorNumber);
 
 }
 
