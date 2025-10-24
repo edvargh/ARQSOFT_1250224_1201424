@@ -36,13 +36,7 @@ public class UserMongoRepository implements UserRepository {
     return "^" + Pattern.quote(s);
   }
 
-  private long ensureUserId(User u, UserDoc docFromUsername) {
-    if (u.getId() != null) return u.getId();
-    if (docFromUsername != null && docFromUsername.getUserId() != null) return docFromUsername.getUserId();
-    return System.currentTimeMillis();
-  }
-
-  private void setDomainId(User u, Long id) {
+  private void setDomainId(User u, String id) {
     try {
       Field fid = User.class.getDeclaredField("id");
       fid.setAccessible(true);
@@ -61,25 +55,30 @@ public class UserMongoRepository implements UserRepository {
 
   @Override
   public <S extends User> S save(S entity) {
-    var existingByUsername = repo.findByUsername(entity.getUsername()).orElse(null);
+    if (entity.getId() == null || entity.getId().isBlank()) {
+      throw new IllegalStateException("User id must be assigned before saving");
+    }
 
-    Long userId = ensureUserId(entity, existingByUsername);
+    var existingByUsername = repo.findByUsername(entity.getUsername()).orElse(null);
     var doc = mapper.toDoc(entity);
-    doc.setUserId(userId);
     if (existingByUsername != null) {
       doc.setId(existingByUsername.getId());
     }
 
     var saved = repo.save(doc);
 
-    setDomainId(entity, saved.getUserId());
+    try {
+      Field fid = User.class.getDeclaredField("id");
+      fid.setAccessible(true);
+      fid.set(entity, saved.getId());
+    } catch (Exception ignored) { }
 
     return entity;
   }
 
   @Override
-  public Optional<User> findById(Long objectId) {
-    return repo.findByUserId(objectId).map(mapper::toDomain);
+  public Optional<User> findById(String objectId) {
+    return repo.findById(objectId).map(mapper::toDomain);
   }
 
   @Override
@@ -125,7 +124,7 @@ public class UserMongoRepository implements UserRepository {
   public void delete(User user) {
     if (user == null) return;
     if (user.getId() != null) {
-      repo.findByUserId(user.getId()).ifPresent(d -> repo.deleteById(d.getId()));
+      repo.deleteById(user.getId());
       return;
     }
     if (user.getUsername() != null) {

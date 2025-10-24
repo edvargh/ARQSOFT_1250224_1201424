@@ -12,6 +12,7 @@ import pt.psoft.g1.psoftg1.exceptions.ConflictException;
 import pt.psoft.g1.psoftg1.exceptions.NotFoundException;
 import pt.psoft.g1.psoftg1.readermanagement.model.ReaderDetails;
 import pt.psoft.g1.psoftg1.readermanagement.repositories.ReaderRepository;
+import pt.psoft.g1.psoftg1.shared.id.IdGenerator;
 import pt.psoft.g1.psoftg1.shared.repositories.ForbiddenNameRepository;
 import pt.psoft.g1.psoftg1.shared.repositories.PhotoRepository;
 import pt.psoft.g1.psoftg1.usermanagement.model.Reader;
@@ -32,6 +33,7 @@ public class ReaderServiceImpl implements ReaderService {
     private final GenreRepository genreRepo;
     private final ForbiddenNameRepository forbiddenNameRepository;
     private final PhotoRepository photoRepository;
+    private final IdGenerator idGenerator;
 
 
     @Override
@@ -71,8 +73,12 @@ public class ReaderServiceImpl implements ReaderService {
         }
 
         int count = readerRepo.getCountFromCurrentYear();
+
         Reader reader = readerMapper.createReader(request);
+        reader.assignId(idGenerator.newId());
+
         ReaderDetails rd = readerMapper.createReaderDetails(count+1, reader, request, photoURI, interestList);
+        rd.assignId(idGenerator.newId());
 
         userRepo.save(reader);
         return readerRepo.save(rd);
@@ -88,8 +94,8 @@ public class ReaderServiceImpl implements ReaderService {
     }
 
     @Override
-    public ReaderDetails update(final Long id, final UpdateReaderRequest request, final long desiredVersion, String photoURI){
-        final ReaderDetails readerDetails = readerRepo.findByUserId(id)
+    public ReaderDetails update(final String id, final UpdateReaderRequest request, final long desiredVersion, String photoURI){
+        final ReaderDetails readerDetails = readerRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Cannot find reader"));
 
         List<String> stringInterestList = request.getInterestList();

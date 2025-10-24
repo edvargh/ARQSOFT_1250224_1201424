@@ -11,7 +11,7 @@ import pt.psoft.g1.psoftg1.shared.repositories.PhotoRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface SpringDataPhotoRepository extends PhotoRepository, CrudRepository<Photo, Long> {
+public interface SpringDataPhotoRepository extends PhotoRepository, CrudRepository<Photo, String> {
     /*@Override
     @Query("SELECT p " +
             "FROM Photo p " +

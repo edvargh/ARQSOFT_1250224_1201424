@@ -3,7 +3,7 @@ package pt.psoft.g1.psoftg1.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import pt.psoft.g1.psoftg1.shared.id.Base64UrlIdGenerator;
+import pt.psoft.g1.psoftg1.shared.id.Base65IdGenerator;
 import pt.psoft.g1.psoftg1.shared.id.IdGenerator;
 import pt.psoft.g1.psoftg1.shared.id.UlidGenerator;
 
@@ -11,9 +11,9 @@ import pt.psoft.g1.psoftg1.shared.id.UlidGenerator;
 public class IdGeneratorConfig {
 
   @Bean
-  @Profile("id-base64")
-  public IdGenerator base64IdGenerator() {
-    return new Base64UrlIdGenerator();
+  @Profile("id-base65")
+  public IdGenerator base65IdGenerator() {
+    return new Base65IdGenerator();
   }
 
   @Bean

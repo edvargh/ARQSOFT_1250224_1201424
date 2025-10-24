@@ -12,7 +12,7 @@
 
 # Commands for base64 and timestamp id generation:
 - # Base64
-mvn spring-boot:run -D"spring-boot.run.profiles=mongo,redis,isbn-openlibrary-only,id-base64"
+mvn spring-boot:run -D"spring-boot.run.profiles=mongo,redis,isbn-openlibrary-only,id-base65"
 
 # Timestamp/ULID-like
 mvn spring-boot:run -D"spring-boot.run.profiles=mongo,redis,isbn-openlibrary-only,id-ts"

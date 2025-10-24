@@ -20,7 +20,7 @@ public class ForbiddenNameMongoRepository implements ForbiddenNameRepository {
   private final SpringMongoForbiddenNameRepo repo;
 
   private static ForbiddenName toDomain(ForbiddenNameDoc d) {
-    return d == null ? null : new ForbiddenName(d.getForbiddenName());
+    return d == null ? null : new ForbiddenName(d.getId(), d.getForbiddenName());
   }
 
   private static ForbiddenNameDoc toDoc(ForbiddenName f) {

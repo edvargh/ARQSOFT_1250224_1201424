@@ -21,6 +21,7 @@ import pt.psoft.g1.psoftg1.readermanagement.services.SearchReadersQuery;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.regex.Pattern;
+import pt.psoft.g1.psoftg1.usermanagement.repositories.UserRepository;
 
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
 
@@ -33,8 +34,7 @@ public class ReaderMongoRepository implements ReaderRepository {
   private final MongoTemplate mongo;
   private final ReaderMongoMapper mapper;
   private final GenreRepository genreRepo;
-
-  private final Optional<pt.psoft.g1.psoftg1.usermanagement.repositories.UserRepository> userRepoOpt = Optional.empty();
+  private final UserRepository userRepo;
 
   private List<Genre> toGenres(List<String> names) {
     if (names == null) return null;
@@ -44,8 +44,8 @@ public class ReaderMongoRepository implements ReaderRepository {
   }
 
   private ReaderDetails hydrate(ReaderDoc d) {
-    var readerEntity = userRepoOpt
-        .flatMap(u -> u.findById(d.getUserId()))
+    var readerEntity = Optional.ofNullable(d.getUserId())
+        .flatMap(userRepo::findById)
         .filter(u -> u instanceof pt.psoft.g1.psoftg1.usermanagement.model.Reader)
         .map(u -> (pt.psoft.g1.psoftg1.usermanagement.model.Reader) u)
         .orElse(null);
@@ -83,8 +83,8 @@ public class ReaderMongoRepository implements ReaderRepository {
   }
 
   @Override
-  public Optional<ReaderDetails> findByUserId(Long userId) {
-    return repo.findByUserId(userId).map(this::hydrate);
+  public Optional<ReaderDetails> findById(String id) {
+    return repo.findById(id).map(this::hydrate);
   }
 
   @Override
@@ -96,11 +96,15 @@ public class ReaderMongoRepository implements ReaderRepository {
 
   @Override
   public ReaderDetails save(ReaderDetails readerDetails) {
-    ReaderDoc doc = repo.findByReaderNumber(readerDetails.getReaderNumber())
-        .orElseGet(ReaderDoc::new);
-
     ReaderDoc fresh = mapper.toDoc(readerDetails);
-    if (doc.getId() != null) fresh.setId(doc.getId());
+
+    repo.findByReaderNumber(readerDetails.getReaderNumber()).ifPresent(existing -> {
+      if (existing.getId() != null && fresh.getId() != null && !existing.getId().equals(fresh.getId())) {
+        throw new IllegalStateException(
+            "ReaderDoc _id diverges from JPA pk for readerNumber " + readerDetails.getReaderNumber()
+        );
+      }
+    });
 
     ReaderDoc saved = repo.save(fresh);
     return hydrate(saved);

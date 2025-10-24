@@ -13,5 +13,5 @@ public interface SpringMongoReaderRepo extends MongoRepository<ReaderDoc, String
   Optional<ReaderDoc> findByReaderNumber(String readerNumber);
   List<ReaderDoc> findByPhoneNumber(String phoneNumber);
   Optional<ReaderDoc> findByUsername(String username);
-  Optional<ReaderDoc> findByUserId(Long userId);
+  Optional<ReaderDoc> findById(String Id);
 }

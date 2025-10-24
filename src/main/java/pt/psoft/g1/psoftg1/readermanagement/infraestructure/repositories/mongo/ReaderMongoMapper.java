@@ -12,6 +12,7 @@ public class ReaderMongoMapper {
 
   public ReaderDoc toDoc(ReaderDetails rd) {
     return ReaderDoc.builder()
+        .id(extractReaderPk(rd))
         .readerNumber(rd.getReaderNumber())
         .userId(rd.getReader() == null ? null : rd.getReader().getId())
         .username(rd.getReader() == null ? null : rd.getReader().getUsername())
@@ -53,6 +54,17 @@ public class ReaderMongoMapper {
     } catch (Exception ignored) {}
 
     return rd;
+  }
+
+  private String extractReaderPk(ReaderDetails rd) {
+    try {
+      var f = ReaderDetails.class.getDeclaredField("pk");
+      f.setAccessible(true);
+      Object v = f.get(rd);
+      return v == null ? null : v.toString();
+    } catch (Exception e) {
+      return null;
+    }
   }
 
   private int extractSequential(String readerNumber) {
