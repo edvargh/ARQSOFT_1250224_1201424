@@ -61,6 +61,8 @@
 			<optional>true</optional>
 		</dependency>
 
+
+
 		<!-- OpenAPI & Swagger UI-->
 		<dependency>
 			<groupId>org.springdoc</groupId>
@@ -89,13 +91,6 @@
 			<version>20220608.1</version>
 		</dependency>
 
-		<!-- Testing framework-->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-
 		<!-- Web client -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -117,6 +112,13 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-mongodb</artifactId>
 		</dependency>
+
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>test</scope>
+		</dependency>
+
 
 	</dependencies>
 

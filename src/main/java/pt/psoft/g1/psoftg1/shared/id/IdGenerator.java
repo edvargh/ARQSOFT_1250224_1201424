@@ -4,3 +4,4 @@ public interface IdGenerator {
   String newId();
   String newId(String prefix);
 }
+

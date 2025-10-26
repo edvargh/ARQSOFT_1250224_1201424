@@ -161,10 +161,8 @@ public class User implements UserDetails {
 		return u;
 	}
 
-	public void setPassword(final String password) {
-		Password passwordCheck = new Password(password);
-		final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-		this.password = passwordEncoder.encode(password);
+	public void setPassword(final String encodedPassword) {
+		this.password = encodedPassword;
 	}
 
     public void addAuthority(final Role r) {
