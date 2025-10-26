@@ -40,7 +40,8 @@ public abstract class ReaderViewMapper extends MapperInterface {
     @Mapping(target = ".", qualifiedByName = "toReaderView")
     public abstract List<ReaderView> toReaderView(Iterable<ReaderDetails> readerList);
 
-   @Mapping(target = "readerView", source = "readerDetails")
+    @Mapping(target = "readerView", source = "readerDetails", qualifiedByName = "toReaderView")
+    @Mapping(target = "lendingCount", source = "lendingCount")
     public abstract ReaderCountView toReaderCountView(ReaderBookCountDTO readerBookCountDTO);
 
     public abstract List<ReaderCountView> toReaderCountViewList(List<ReaderBookCountDTO> readerBookCountDTOList);

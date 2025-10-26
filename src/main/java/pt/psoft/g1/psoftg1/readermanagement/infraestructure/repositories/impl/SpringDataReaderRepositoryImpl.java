@@ -44,13 +44,6 @@ public interface SpringDataReaderRepositoryImpl extends ReaderRepository, Reader
             "WHERE u.username = :username")
     Optional<ReaderDetails> findByUsername(@Param("username") @NotNull String username);
 
-    @Override
-    @Query("SELECT r " +
-            "FROM ReaderDetails r " +
-            "JOIN User u ON r.reader.id = u.id " +
-            "WHERE u.id = :userId")
-    Optional<ReaderDetails> findById(@Param("id") @NotNull String id);
-
 
     @Override
     @Query("SELECT COUNT (rd) " +

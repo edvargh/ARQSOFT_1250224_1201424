@@ -27,13 +27,11 @@ public class IsbnLookupService {
   }
 
   public IsbnLookupResult getIsbnsByTitle(String title, IsbnLookupMode mode) {
-    // choose providers first
     List<IsbnProvider> selected = selectProviders(mode);
 
-    // create a stable providers signature for the cache key
     String providersKey = selected.stream()
         .map(IsbnProvider::getName)
-        .sorted()                       // stable order
+        .sorted()
         .collect(Collectors.joining("+"));
 
     String key = "isbn:title:" + normalizeTitleKey(title)

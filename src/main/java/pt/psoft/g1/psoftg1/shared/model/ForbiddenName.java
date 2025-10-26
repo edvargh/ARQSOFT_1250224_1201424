@@ -21,7 +21,7 @@ public class ForbiddenName{
     private String forbiddenName;
 
     public ForbiddenName(String id, String name) {
-        this.forbiddenName = name;
+        this.pk = id;
         this.forbiddenName = name;
     }
 

@@ -50,7 +50,6 @@ import lombok.RequiredArgsConstructor;
  *
  */
 @Repository
-@Profile("mysql")
 @CacheConfig(cacheNames = "users")
 public interface SpringDataUserRepository extends UserRepository, UserRepoCustom, CrudRepository<User, String> {
 
