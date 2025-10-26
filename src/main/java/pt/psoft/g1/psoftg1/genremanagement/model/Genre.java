@@ -39,7 +39,7 @@ public class Genre {
         if(genre.isBlank())
             throw new IllegalArgumentException("Genre cannot be blank");
         if(genre.length() > GENRE_MAX_LENGTH)
-            throw new IllegalArgumentException("Genre has a maximum of 4096 characters");
+            throw new IllegalArgumentException("Genre has a maximum of 100 characters");
         this.genre = genre;
     }
 
