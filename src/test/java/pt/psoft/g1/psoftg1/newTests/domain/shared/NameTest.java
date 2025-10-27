@@ -49,4 +49,30 @@ class NameTest {
     assertThrows(IllegalArgumentException.class, () -> n.setName("Robert C. Martin")); // space + dot
     assertEquals("Bob", n.toString());
   }
+
+  @Test
+  void constructor_allowsAccents() {
+    Name n = new Name("Álvaro Núñez");
+    assertEquals("Álvaro Núñez", n.toString());
+  }
+
+  @Test
+  void constructor_allowsHyphenAndApostrophe() {
+    Name n1 = new Name("Jean-Luc");
+    Name n2 = new Name("O'Connor");
+    assertEquals("Jean-Luc", n1.toString());
+    assertEquals("O'Connor", n2.toString());
+  }
+
+  @Test
+  void constructor_underscore_disallowed() {
+    assertThrows(IllegalArgumentException.class, () -> new Name("John_Doe"));
+  }
+
+  @Test
+  void setName_valid_reallyUpdates_notNoOp() {
+    Name n = new Name("Alice");
+    n.setName("Bob");
+    assertEquals("Bob", n.toString());
+  }
 }

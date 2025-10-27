@@ -169,4 +169,177 @@ class LendingTest {
     Lending l = new Lending(book, reader, 1, 7, 50);
     assertEquals("Clean Code", l.getTitle());
   }
+
+  @Test
+  void setReturned_withComment_storesComment() throws Exception {
+    Lending l = new Lending(book, reader, 1, 7, 50);
+    setVersion(l, 3L);
+
+    l.setReturned(3L, "nice book");
+
+    var f = Lending.class.getDeclaredField("commentary");
+    f.setAccessible(true);
+    assertEquals("nice book", f.get(l));
+  }
+
+  @Test
+  void setReturned_withNullComment_leavesCommentNull() throws Exception {
+    Lending l = new Lending(book, reader, 1, 7, 50);
+    setVersion(l, 2L);
+
+    l.setReturned(2L, null);
+
+    var f = Lending.class.getDeclaredField("commentary");
+    f.setAccessible(true);
+    assertNull(f.get(l));
+  }
+
+  @Test
+  void notReturned_afterLimit_daysUntilReturnEmpty() {
+    Lending l = Lending.newBootstrappingLending(
+        book, reader, 2024, 2,
+        LocalDate.now().minusDays(10), null,
+        5, 200);
+
+    assertTrue(l.getDaysUntilReturn().isEmpty(), "past due should return empty daysUntilReturn");
+  }
+
+  @Test
+  void setReturned_whenPastLimit_appliesFineFromNow() {
+    Lending l = Lending.newBootstrappingLending(
+        book, reader, 2024, 5,
+        LocalDate.now().minusDays(10), null,
+        5, 123);
+    setVersion(l, 1L);
+
+    l.setReturned(1L, "late");
+
+    assertTrue(l.getDaysDelayed() > 0);
+    assertTrue(l.getFineValueInCents().isPresent());
+    assertTrue(l.getFineValueInCents().get() > 0);
+  }
+
+  @Test
+  void factory_nullArguments_throw() {
+    assertThrows(IllegalArgumentException.class, () ->
+        Lending.newBootstrappingLending(null, reader, 2024, 1, LocalDate.now(), null, 7, 10));
+    assertThrows(IllegalArgumentException.class, () ->
+        Lending.newBootstrappingLending(book, null, 2024, 1, LocalDate.now(), null, 7, 10));
+  }
+
+  @Test
+  void getLendingNumber_matchesYearSlashSeq_constructorUsesCurrentYear() {
+    Lending l = new Lending(book, reader, 42, 7, 10);
+    String num = l.getLendingNumber();
+    assertTrue(num.matches("\\d{4}/\\d+"));
+  }
+
+  @Test
+  void getLendingNumber_matchesYearSlashSeq_factoryUsesProvidedYear() {
+    Lending l = Lending.newBootstrappingLending(
+        book, reader, 1999, 7, LocalDate.now(), null, 14, 10);
+    assertEquals("1999/7", l.getLendingNumber());
+  }
+
+  @Test
+  void returnedExactlyOnLimit_noDelay_noFine() {
+    LocalDate start = LocalDate.now().minusDays(5);
+    int duration = 5;
+    LocalDate returned = start.plusDays(5);
+
+    Lending l = Lending.newBootstrappingLending(
+        book, reader, 2024, 9, start, returned, duration, 300);
+
+    assertEquals(0, l.getDaysDelayed());
+    assertTrue(l.getFineValueInCents().isEmpty());
+  }
+
+  @Test
+  void overdueWithZeroFinePerDay_returnsZeroFine() {
+    Lending l = Lending.newBootstrappingLending(
+        book, reader, 2024, 10,
+        LocalDate.now().minusDays(10), null,
+        5, 0);
+
+    assertEquals(5, l.getDaysDelayed());
+    assertEquals(Optional.of(0), l.getFineValueInCents(), "fine should be zero when per-day fine is zero");
+  }
+
+  @Test
+  void notReturned_exactlyOnLimit_zeroDaysUntilReturn_noOverdue_noFine() {
+    int duration = 5;
+    Lending l = Lending.newBootstrappingLending(
+        book, reader, 2024, 11,
+        LocalDate.now().minusDays(duration),
+        null, duration, 200);
+
+    assertEquals(0, l.getDaysDelayed());
+    assertEquals(Optional.of(0), l.getDaysUntilReturn());
+    assertTrue(l.getDaysOverdue().isEmpty());
+    assertTrue(l.getFineValueInCents().isEmpty());
+  }
+
+  @Test
+  void notReturned_oneDayOverdue_overdueIsOne_fineIsPerDay() {
+    int perDay = 123;
+    Lending l = Lending.newBootstrappingLending(
+        book, reader, 2024, 12,
+        LocalDate.now().minusDays(6),
+        null, 5, perDay);
+
+    assertEquals(1, l.getDaysDelayed());
+    assertEquals(Optional.of(1), l.getDaysOverdue());
+    assertEquals(Optional.of(perDay), l.getFineValueInCents());
+  }
+
+  @Test
+  void setReturned_whenLimitWasYesterday_overdueOne_fineIsPerDay() {
+    int perDay = 200;
+    Lending l = Lending.newBootstrappingLending(
+        book, reader, 2024, 13,
+        LocalDate.now().minusDays(6), null, 5, perDay);
+    setVersion(l, 1L);
+
+    l.setReturned(1L, "late");
+
+    assertEquals(1, l.getDaysDelayed());
+    assertEquals(Optional.of(1), l.getDaysOverdue());
+    assertEquals(Optional.of(perDay), l.getFineValueInCents());
+  }
+
+  @Test
+  void constructor_initializesTransientCounters_withoutCallingGetters() throws Exception {
+    Lending l = new Lending(book, reader, 1, 7, 100);
+
+    Field fUntil = Lending.class.getDeclaredField("daysUntilReturn");
+    fUntil.setAccessible(true);
+    Field fOverdue = Lending.class.getDeclaredField("daysOverdue");
+    fOverdue.setAccessible(true);
+
+    Integer daysUntilReturn = (Integer) fUntil.get(l);
+    Integer daysOverdue = (Integer) fOverdue.get(l);
+
+    assertNotNull(daysUntilReturn, "constructor should initialize daysUntilReturn");
+    assertTrue(daysUntilReturn >= 0, "daysUntilReturn should be non-negative");
+    assertNull(daysOverdue, "constructor should set daysOverdue to null when not overdue");
+  }
+
+  @Test
+  void constructor_withPastLimit_initializesDaysOverdueWithoutGetter() throws Exception {
+    int negativeDuration = -3;
+    int perDay = 50;
+
+    Lending l = new Lending(book, reader, 1, negativeDuration, perDay);
+
+    Field fOverdue = Lending.class.getDeclaredField("daysOverdue");
+    fOverdue.setAccessible(true);
+    Field fUntil = Lending.class.getDeclaredField("daysUntilReturn");
+    fUntil.setAccessible(true);
+
+    Integer daysOverdue = (Integer) fOverdue.get(l);
+    Integer daysUntilReturn = (Integer) fUntil.get(l);
+
+    assertEquals(Integer.valueOf(3), daysOverdue, "constructor should initialize daysOverdue when already overdue");
+    assertNull(daysUntilReturn, "daysUntilReturn should be null when already overdue");
+  }
 }

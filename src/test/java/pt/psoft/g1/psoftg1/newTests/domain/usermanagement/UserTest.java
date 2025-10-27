@@ -83,4 +83,34 @@ class UserTest {
     assertThrows(IllegalArgumentException.class, () -> new User("x@x.com","p").assignId(null));
     assertThrows(IllegalArgumentException.class, () -> new User("y@y.com","p").assignId("  "));
   }
+
+  @Test
+  void newUser_invalidName_usesSetterValidation_andThrows() {
+    assertThrows(IllegalArgumentException.class,
+        () -> User.newUser("bad@x.com", "pwd", "   "));
+  }
+
+  @Test
+  void newUser_validName_setsEmbeddedName_nonNull() throws Exception {
+    var u = User.newUser("ok@x.com", "pwd", "Alice Smith");
+
+    assertNotNull(u.getName(), "factory must initialize embedded Name");
+    assertEquals("Alice Smith", u.getName().toString());
+
+    var f = User.class.getDeclaredField("name");
+    f.setAccessible(true);
+    assertNotNull(f.get(u), "embedded Name field should be set by factory");
+  }
+
+  @Test
+  void newUser_withoutSetName_wouldLeaveNameNull_butFactoryMustNot() throws Exception {
+    var u = User.newUser("x@y.com", "pwd", "Valid Name");
+
+    var f = User.class.getDeclaredField("name");
+    f.setAccessible(true);
+    Object value = f.get(u);
+
+    assertNotNull(value, "User.newUser must call setName to initialize embedded Name");
+    assertEquals("Valid Name", u.getName().toString());
+  }
 }

@@ -50,4 +50,24 @@ class PhotoTest {
     assertEquals("first", photo.getId());
     assertEquals(p.toString(), photo.getPhotoFile());
   }
+
+  @Test
+  void setPhotoFile_updatesValue() {
+    Photo photo = new Photo(Paths.get("a", "b.jpg"));
+    String newPath = Paths.get("c", "d.png").toString();
+
+    photo.setPhotoFile(newPath);
+
+    assertEquals(newPath, photo.getPhotoFile());
+  }
+
+  @Test
+  void assignIdIfAbsent_whenIdAlreadySet_nullDoesNotOverride() {
+    Photo photo = new Photo(Paths.get("a", "b.jpg"));
+    photo.assignIdIfAbsent("ph-1");
+
+    photo.assignIdIfAbsent(null);
+
+    assertEquals("ph-1", photo.getId());
+  }
 }

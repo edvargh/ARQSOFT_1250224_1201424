@@ -53,4 +53,28 @@ class EntityWithPhotoTest {
     e.setPhoto(null);
     assertNull(e.getPhoto(), "Setting null later should clear previous photo");
   }
+
+  @Test
+  void setPhoto_validThenDifferentValid_overwritesWithNewPhoto() {
+    EntityWithPhotoTest.DummyEntity e = new EntityWithPhotoTest.DummyEntity();
+    e.setPhoto("pics/a.png");
+    String second = "pics/b.png";
+
+    e.setPhoto(second);
+
+    assertNotNull(e.getPhoto());
+    assertEquals(java.nio.file.Paths.get(second).toString(), e.getPhoto().getPhotoFile());
+  }
+
+  @Test
+  void setPhoto_validThenInvalid_overwritesToNull() {
+    EntityWithPhotoTest.DummyEntity e = new EntityWithPhotoTest.DummyEntity();
+    e.setPhoto("pics/a.png");
+    assertNotNull(e.getPhoto());
+
+    e.setPhoto("\u0000bad");
+
+    assertNull(e.getPhoto());
+  }
+
 }
