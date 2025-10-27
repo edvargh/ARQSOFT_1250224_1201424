@@ -104,4 +104,75 @@ class AuthorTest {
     assertEquals("Bio", a.getBio());
     assertNull(a.getPhoto());
   }
+
+  @Test
+  void constructor_withPhoto_buildsWithPhoto() {
+    Author a = new Author("Robert Martin", "Author of Clean Code", "images/cover.jpg");
+    assertNotNull(a.getPhoto(), "photo should be set when a valid URI is given");
+    assertTrue(a.getPhoto().getPhotoFile().contains("images"), "photo file should reflect the URI");
+  }
+
+  @Test
+  void applyPatch_photoUriProvided_setsPhoto() {
+    Author a = new Author("Old Name", "Old Bio", null);
+    setVersion(a, 10L);
+
+    UpdateAuthorRequest req = mock(UpdateAuthorRequest.class);
+    when(req.getName()).thenReturn(null);
+    when(req.getBio()).thenReturn(null);
+    when(req.getPhotoURI()).thenReturn("pics/a.png");
+
+    a.applyPatch(10L, req);
+
+    assertNotNull(a.getPhoto(), "photo should be created from patch");
+    assertTrue(a.getPhoto().getPhotoFile().contains("pics"));
+  }
+
+  @Test
+  void applyPatch_invalidPhotoUri_clearsPhoto() {
+    Author a = new Author("Name", "Bio", "valid/one.png");
+    assertNotNull(a.getPhoto());
+    setVersion(a, 2L);
+
+    UpdateAuthorRequest req = mock(UpdateAuthorRequest.class);
+    when(req.getName()).thenReturn(null);
+    when(req.getBio()).thenReturn(null);
+    when(req.getPhotoURI()).thenReturn("\u0000bad");
+
+    a.applyPatch(2L, req);
+
+    assertNull(a.getPhoto(), "invalid path in patch should result in null photo");
+  }
+
+  @Test
+  void removePhoto_versionMatches_clearsPhoto() {
+    Author a = new Author("Name", "Bio", "folder/pic.jpg");
+    assertNotNull(a.getPhoto());
+    setVersion(a, 3L);
+
+    a.removePhoto(3L);
+
+    assertNull(a.getPhoto(), "photo should be cleared when version matches");
+  }
+
+  @Test
+  void applyPatch_photoUriNull_keepsExistingPhoto() {
+    Author a = new Author("Name", "Bio", "existing/pic.jpg");
+    assertNotNull(a.getPhoto(), "precondition: photo should exist");
+    String before = a.getPhoto().getPhotoFile();
+    setVersion(a, 11L);
+
+    UpdateAuthorRequest req = mock(UpdateAuthorRequest.class);
+    when(req.getName()).thenReturn("New Name");
+    when(req.getBio()).thenReturn("New Bio");
+    when(req.getPhotoURI()).thenReturn(null);
+
+    a.applyPatch(11L, req);
+
+    assertNotNull(a.getPhoto(), "photo should be preserved when patch photoURI is null");
+    assertEquals(before, a.getPhoto().getPhotoFile(), "existing photo should not be cleared or modified");
+    assertEquals("New Name", a.getName());
+    assertEquals("New Bio", a.getBio());
+  }
+
 }

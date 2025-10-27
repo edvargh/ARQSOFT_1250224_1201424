@@ -166,4 +166,120 @@ class BookTest {
     assertEquals(genre, b.getGenre());
     assertEquals(1, b.getAuthors().size());
   }
+
+  @Test
+  void removePhoto_versionMatches_clearsPhoto() {
+    Book b = new Book("9780306406157", "T", "D", genre, List.of(author1), "pics/cover.png");
+    setVersion(b, 2L);
+
+    b.removePhoto(2L);
+
+    assertNull(b.getPhoto(), "Photo should be cleared when version matches");
+  }
+
+  @Test
+  void applyPatch_setsPhoto_whenPhotoUriProvided() {
+    Book b = new Book("9780306406157", "T", "D", genre, List.of(author1), null);
+    setVersion(b, 10L);
+
+    UpdateBookRequest req = mock(UpdateBookRequest.class);
+    when(req.getTitle()).thenReturn(null);
+    when(req.getDescription()).thenReturn(null);
+    when(req.getGenreObj()).thenReturn(null);
+    when(req.getAuthorObjList()).thenReturn(null);
+    when(req.getPhotoURI()).thenReturn("images/new.jpg");
+
+    b.applyPatch(10L, req);
+
+    assertNotNull(b.getPhoto());
+    assertTrue(b.getPhoto().getPhotoFile().endsWith("images/new.jpg") ||
+            b.getPhoto().getPhotoFile().contains("images") ,
+        "Photo file should reflect provided URI");
+  }
+
+  @Test
+  void applyPatch_allowsUpdatingAuthorsToEmptyList() {
+    Book b = new Book("9780306406157", "T", "D", genre, List.of(author1, author2), null);
+    setVersion(b, 7L);
+
+    UpdateBookRequest req = mock(UpdateBookRequest.class);
+    when(req.getAuthorObjList()).thenReturn(List.of());
+    b.applyPatch(7L, req);
+
+    assertEquals(0, b.getAuthors().size(), "Patch should accept an empty author list");
+  }
+
+  @Test
+  void applyPatch_whenBothVersionsNull_allowsPatch() throws Exception {
+    Book b = new Book("9780306406157", "T", "D", genre, List.of(author1), null);
+    Field f = Book.class.getDeclaredField("version");
+    f.setAccessible(true);
+    f.set(b, null);
+
+    UpdateBookRequest req = mock(UpdateBookRequest.class);
+    when(req.getTitle()).thenReturn("T2");
+
+    b.applyPatch(null, req);
+    assertEquals("T2", b.getTitle().toString());
+  }
+
+  @Test
+  void constructor_nullDescription_keepsFieldNull_andGetDescriptionThrows() {
+    Book b = new Book("9780306406157", "T", null, genre, List.of(author1), null);
+    assertThrows(NullPointerException.class, b::getDescription);
+  }
+
+  @Test
+  void applyPatch_updatesMultipleFieldsTogether() {
+    Book b = new Book("9780306406157", "T", "D", genre, List.of(author1), null);
+    setVersion(b, 3L);
+    Genre g2 = mock(Genre.class);
+
+    UpdateBookRequest req = mock(UpdateBookRequest.class);
+    when(req.getTitle()).thenReturn("T2");
+    when(req.getDescription()).thenReturn("D2");
+    when(req.getGenreObj()).thenReturn(g2);
+    when(req.getPhotoURI()).thenReturn("pics/p.png");
+
+    b.applyPatch(3L, req);
+
+    assertEquals("T2", b.getTitle().toString());
+    assertEquals("D2", b.getDescription());
+    assertEquals(g2, b.getGenre());
+    assertNotNull(b.getPhoto());
+  }
+
+  @Test
+  void constructor_withPhoto_setsPhoto() {
+    Book b = new Book(
+        "9780306406157", "Clean Code", "Great book",
+        genre, List.of(author1), "covers/clean-code.jpg");
+
+    assertNotNull(b.getPhoto(), "constructor should set photo when URI is provided");
+    assertTrue(b.getPhoto().getPhotoFile().contains("covers"),
+        "photo file should reflect the URI");
+  }
+
+  @Test
+  void applyPatch_photoUriNull_keepsExistingPhoto() {
+    Book b = new Book(
+        "9780306406157", "T", "D",
+        genre, List.of(author1), "existing/p.png");
+    setVersion(b, 9L);
+
+    UpdateBookRequest req = mock(UpdateBookRequest.class);
+    when(req.getTitle()).thenReturn(null);
+    when(req.getDescription()).thenReturn(null);
+    when(req.getGenreObj()).thenReturn(null);
+    when(req.getAuthorObjList()).thenReturn(null);
+    when(req.getPhotoURI()).thenReturn(null);
+
+    var originalPhoto = b.getPhoto();
+
+    b.applyPatch(9L, req);
+
+    assertNotNull(b.getPhoto(), "existing photo should remain when photoURI is null");
+    assertSame(originalPhoto, b.getPhoto(), "photo reference should be unchanged");
+  }
+
 }

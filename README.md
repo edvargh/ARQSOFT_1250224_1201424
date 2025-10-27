@@ -16,3 +16,7 @@ mvn spring-boot:run -D"spring-boot.run.profiles=mongo,redis,isbn-openlibrary-onl
 
 # Timestamp/ULID-like
 mvn spring-boot:run -D"spring-boot.run.profiles=mongo,redis,isbn-openlibrary-only,id-ts"
+
+# Command to run mutation tests:
+- mvn clean test org.pitest:pitest-maven:mutationCoverage
+

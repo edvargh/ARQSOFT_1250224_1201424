@@ -183,4 +183,137 @@ class ReaderDetailsTest {
     assertFalse(d.isThirdPartySharingConsent());
     verifyNoMoreInteractions(reader);
   }
+
+  @Test
+  void constructor_withPhoto_setsPhoto() {
+    ReaderDetails d = new ReaderDetails(
+        1, reader, "2000-01-01", "910000000",
+        true, false, true, "pics/a.png", List.of());
+    assertNotNull(d.getPhoto(), "photo should be set by constructor when URI provided");
+  }
+
+  @Test
+  void constructor_thirdPartyTrue_setsTrue() {
+    ReaderDetails d = new ReaderDetails(
+        1, reader, "2000-01-01", "910000000",
+        true, false, true, null, List.of());
+    assertTrue(d.isThirdPartySharingConsent(),
+        "constructor must honor thirdParty=true");
+  }
+
+  @Test
+  void isGdprConsent_reflectsSetter_falseCaseKillsAlwaysTrueMutant() {
+    ReaderDetails d = new ReaderDetails(
+        1, reader, "2000-01-01", "910000000",
+        true, false, false, null, List.of());
+    d.setGdprConsent(false);
+    assertFalse(d.isGdprConsent(), "getter must reflect false when explicitly set");
+  }
+
+  @Test
+  void isMarketingConsent_falseFromConstructor_killsAlwaysTrueMutant() {
+    ReaderDetails d = new ReaderDetails(
+        1, reader, "2000-01-01", "910000000",
+        true, false, false, null, List.of());
+    assertFalse(d.isMarketingConsent(), "marketing=false must be observable via getter");
+  }
+
+  @Test
+  void applyPatch_equalMarketingAndThirdParty_doNotCallSetters() {
+    ReaderDetails real = new ReaderDetails(
+        1, reader, "2000-01-01", "910000000",
+        true,  true, false, null, List.of());
+    ReaderDetails d = spy(real);
+    setVersion(d, 4L);
+
+    UpdateReaderRequest req = mock(UpdateReaderRequest.class);
+    when(req.getBirthDate()).thenReturn(null);
+    when(req.getPhoneNumber()).thenReturn(null);
+    when(req.getMarketing()).thenReturn(true);
+    when(req.getThirdParty()).thenReturn(false);
+    when(req.getFullName()).thenReturn(null);
+    when(req.getUsername()).thenReturn(null);
+    when(req.getPassword()).thenReturn(null);
+
+    d.applyPatch(4L, req, null, null);
+
+    verify(d, never()).setMarketingConsent(anyBoolean());
+    verify(d, never()).setThirdPartySharingConsent(anyBoolean());
+  }
+
+  @Test
+  void applyPatch_photoUriProvided_callsSetPhoto_andSetsPhoto() {
+    ReaderDetails d = new ReaderDetails(
+        1, reader, "2000-01-01", "910000000",
+        true, false, false, null, List.of());
+    setVersion(d, 6L);
+
+    UpdateReaderRequest req = mock(UpdateReaderRequest.class);
+    when(req.getBirthDate()).thenReturn(null);
+    when(req.getPhoneNumber()).thenReturn(null);
+    when(req.getMarketing()).thenReturn(false);
+    when(req.getThirdParty()).thenReturn(false);
+    when(req.getFullName()).thenReturn(null);
+    when(req.getUsername()).thenReturn(null);
+    when(req.getPassword()).thenReturn(null);
+
+    String photo = "img/p.png";
+    d.applyPatch(6L, req, photo, null);
+
+    assertNotNull(d.getPhoto(), "applyPatch should set photo when non-null URI provided");
+    assertTrue(d.getPhoto().getPhotoFile().contains("img"));
+  }
+
+  @Test
+  void applyPatch_photoUriNull_keepsExistingPhoto() {
+    ReaderDetails d = new ReaderDetails(
+        1, reader, "2000-01-01", "910000000",
+        true, false, false, "existing/p.png", List.of()
+    );
+    setVersion(d, 7L);
+
+    UpdateReaderRequest req = mock(UpdateReaderRequest.class);
+    when(req.getBirthDate()).thenReturn(null);
+    when(req.getPhoneNumber()).thenReturn(null);
+    when(req.getMarketing()).thenReturn(false);
+    when(req.getThirdParty()).thenReturn(false);
+    when(req.getFullName()).thenReturn(null);
+    when(req.getUsername()).thenReturn(null);
+    when(req.getPassword()).thenReturn(null);
+
+    var originalPhoto = d.getPhoto();
+
+    d.applyPatch(7L, req, null, null);
+
+    assertNotNull(d.getPhoto(), "existing photo should remain when photoURI is null");
+    assertSame(originalPhoto, d.getPhoto(), "photo reference should be unchanged");
+  }
+
+  @Test
+  void applyPatch_interestListNull_keepsExistingInterests() {
+    Genre g1 = mock(Genre.class);
+    List<Genre> original = List.of(g1);
+
+    ReaderDetails d = new ReaderDetails(
+        1, reader, "2000-01-01", "910000000",
+        true, false, false, null, original
+    );
+    setVersion(d, 8L);
+
+    UpdateReaderRequest req = mock(UpdateReaderRequest.class);
+    when(req.getBirthDate()).thenReturn(null);
+    when(req.getPhoneNumber()).thenReturn(null);
+    when(req.getMarketing()).thenReturn(false);
+    when(req.getThirdParty()).thenReturn(false);
+    when(req.getFullName()).thenReturn(null);
+    when(req.getUsername()).thenReturn(null);
+    when(req.getPassword()).thenReturn(null);
+
+    d.applyPatch(8L, req, null, null);
+
+    assertNotNull(d.getInterestList(), "existing interests must be preserved when patch interestList is null");
+    assertSame(original, d.getInterestList(), "interest list reference should be unchanged");
+    assertEquals(1, d.getInterestList().size());
+  }
+
 }

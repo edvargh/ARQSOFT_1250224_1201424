@@ -86,4 +86,19 @@ class BioTest {
     assertThrows(IllegalArgumentException.class, () -> b.setBio(repeat('a', 4097)));
     assertEquals("keep", b.toString());
   }
+
+  @Test
+  void constructor_removesScriptTag() {
+    Bio b = new Bio("<b>x</b><script>alert(1)</script>");
+    assertFalse(b.toString().contains("<script"));
+    assertTrue(b.toString().contains("<b>x</b>"));
+  }
+
+  @Test
+  void setBio_removesScriptTag_keepsFormatting() {
+    Bio b = new Bio("ok");
+    b.setBio("<i>y</i><script>z</script>");
+    assertFalse(b.toString().contains("<script"));
+    assertTrue(b.toString().contains("<i>y</i>"));
+  }
 }

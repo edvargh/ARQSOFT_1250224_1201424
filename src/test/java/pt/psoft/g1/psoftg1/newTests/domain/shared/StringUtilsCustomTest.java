@@ -54,4 +54,22 @@ class StringUtilsCustomTest {
     String s = "just text 123";
     assertEquals(s, StringUtilsCustom.sanitizeHtml(s));
   }
+
+  @Test
+  void isAlphanumeric_emptyString_isAllowedByPattern() {
+    assertTrue(StringUtilsCustom.isAlphanumeric(""));
+  }
+
+  @Test
+  void isAlphanumeric_rejectsEmojiAndSymbols() {
+    assertFalse(StringUtilsCustom.isAlphanumeric("Alice 😀"));
+    assertFalse(StringUtilsCustom.isAlphanumeric("§ection"));
+  }
+
+  @Test
+  void startsOrEndsInWhiteSpace_tabsNewlinesAreNotTreatedAsSpaces_andEmptyStringIsOk() {
+    assertTrue(StringUtilsCustom.startsOrEndsInWhiteSpace("\tindented"));
+    assertTrue(StringUtilsCustom.startsOrEndsInWhiteSpace("line\n"));
+    assertTrue(StringUtilsCustom.startsOrEndsInWhiteSpace(""));
+  }
 }

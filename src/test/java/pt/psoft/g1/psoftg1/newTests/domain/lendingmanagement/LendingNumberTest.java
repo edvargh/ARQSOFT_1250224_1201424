@@ -82,4 +82,31 @@ class LendingNumberTest {
   void string_tooShort_throws() {
     assertThrows(IllegalArgumentException.class, () -> new LendingNumber("2024"));
   }
+
+  @Test
+  void yearSeq_yearEquals1970_allowed() {
+    assertDoesNotThrow(() -> new LendingNumber(1970, 0));
+    assertEquals("1970/0", new LendingNumber(1970, 0).toString());
+  }
+
+  @Test
+  void yearSeq_yearEqualsNow_allowed() {
+    int now = LocalDate.now().getYear();
+    assertDoesNotThrow(() -> new LendingNumber(now, 1));
+    assertEquals(now + "/1", new LendingNumber(now, 1).toString());
+  }
+
+  @Test
+  void yearSeq_sequentialZero_allowed() {
+    int now = LocalDate.now().getYear();
+    assertDoesNotThrow(() -> new LendingNumber(now, 0));
+    assertEquals(now + "/0", new LendingNumber(now, 0).toString());
+  }
+
+  @Test
+  void seqOnly_zero_allowed_usesCurrentYear() {
+    int now = LocalDate.now().getYear();
+    assertDoesNotThrow(() -> new LendingNumber(0));
+    assertEquals(now + "/0", new LendingNumber(0).toString());
+  }
 }

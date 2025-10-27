@@ -50,4 +50,12 @@ class ForbiddenNameTest {
     assertNull(fn.getId());
     assertNull(fn.getForbiddenName());
   }
+
+  @Test
+  void setter_allowsNull_evenThoughSizeAnnotationWouldForbidViaBeanValidation() {
+    ForbiddenName fn = new ForbiddenName("id", "spam");
+    fn.setForbiddenName(null);
+    assertNull(fn.getForbiddenName());
+  }
+
 }
