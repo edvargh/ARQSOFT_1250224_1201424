@@ -30,10 +30,7 @@ import pt.psoft.g1.psoftg1.bookmanagement.model.Book;
 import pt.psoft.g1.psoftg1.bookmanagement.repositories.BookRepository;
 import pt.psoft.g1.psoftg1.genremanagement.model.Genre;
 import pt.psoft.g1.psoftg1.genremanagement.repositories.GenreRepository;
-import pt.psoft.g1.psoftg1.lendingmanagement.repositories.LendingRepository;
 import pt.psoft.g1.psoftg1.newTests.testutils.SqlBackedITBase;
-import pt.psoft.g1.psoftg1.readermanagement.model.ReaderDetails;
-import pt.psoft.g1.psoftg1.readermanagement.repositories.ReaderRepository;
 import pt.psoft.g1.psoftg1.shared.id.IdGenerator;
 import pt.psoft.g1.psoftg1.shared.model.Photo;
 import pt.psoft.g1.psoftg1.shared.repositories.PhotoRepository;
@@ -191,10 +188,10 @@ class AuthorControllerSqlIT extends SqlBackedITBase {
   @Test
   void getPhoto_200_pngOrJpeg_whenPhotoExists() throws Exception {
     var photo = new Photo(Path.of("images/p.png"));
-    photo.assignIdIfAbsent(idGenerator.newId());             // manual id, per assignment
+    photo.assignIdIfAbsent(idGenerator.newId());
     photoRepo.save(photo);
 
-    var a = new Author("Has Photo", "bio", null);    // don't let ctor auto-create Photo
+    var a = new Author("Has Photo", "bio", null);
     a.assignId(idGenerator.newId());
     a.setPhotoEntity(photo);
     var saved = authorRepo.save(a);
@@ -218,8 +215,8 @@ class AuthorControllerSqlIT extends SqlBackedITBase {
 
   @Test
   void deletePhoto_200_whenPhotoExists_andRemovesIt() throws Exception {
-    var photo = new Photo(Path.of("images/p.png"));           // whatever your Photo ctor takes (path/filename)
-    photo.assignIdIfAbsent(idGenerator.newId());             // manual id, per assignment
+    var photo = new Photo(Path.of("images/p.png"));
+    photo.assignIdIfAbsent(idGenerator.newId());
     photoRepo.save(photo);
 
     var a = new Author("Del Photo", "bio", null);
@@ -234,7 +231,7 @@ class AuthorControllerSqlIT extends SqlBackedITBase {
   @Test
   void deletePhoto_404_whenAuthorMissing() throws Exception {
     mvc.perform(delete("/api/authors/{id}/photo", "NOPE"))
-        .andExpect(status().isForbidden()); // controller throws AccessDeniedException in this branch
+        .andExpect(status().isForbidden());
   }
 
   @Test
@@ -270,7 +267,7 @@ class AuthorControllerSqlIT extends SqlBackedITBase {
   @Test
   void coauthors_noCoauthors_returnsEmptyArray() throws Exception {
     var D = a("Dora Duke", "Bio D");
-    book("9780470059029", "Solo", "Only Dora", List.of(D)); // book with single author
+    book("9780470059029", "Solo", "Only Dora", List.of(D));
 
     mvc.perform(get("/api/authors/{id}/coauthors", D.getId()))
         .andExpect(status().isOk())

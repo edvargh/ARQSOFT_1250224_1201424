@@ -15,7 +15,10 @@ import java.nio.file.Path;
 @MappedSuperclass
 public abstract class EntityWithPhoto {
     @Nullable
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(
+        cascade = { CascadeType.PERSIST, CascadeType.MERGE },
+        orphanRemoval = true
+    )
     @JoinColumn(name="photo_id")
     protected Photo photo;
 
@@ -34,8 +37,10 @@ public abstract class EntityWithPhoto {
             this.photo = null;
         } else {
             try {
+                Photo p = new Photo(Path.of(photoURI));
                 //If the Path object instantiation succeeds, it means that we have a valid Path
-                this.photo = new Photo(Path.of(photoURI));
+                p.assignIdIfAbsent(java.util.UUID.randomUUID().toString());
+                this.photo = p;
             } catch (InvalidPathException e) {
                 //For some reason it failed, let's set to null to avoid invalid references to photos
                 this.photo = null;

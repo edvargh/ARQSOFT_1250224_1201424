@@ -32,6 +32,8 @@ public class BookMongoRepository implements BookRepository {
   private final BookMongoMapper mapper;
   private final GenreRepository genreRepo;
   private final AuthorRepository authorRepo;
+  private final java.util.concurrent.ConcurrentMap<String, Book> identityMap = new java.util.concurrent.ConcurrentHashMap<>();
+
 
   /* ----------------------- helpers ------------------------ */
 
@@ -48,11 +50,36 @@ public class BookMongoRepository implements BookRepository {
 
     Book b = new Book(d.getIsbn(), d.getTitle(), d.getDescription(), genre, authors, d.getPhotoFile());
     b.assignPk(d.getId());
+    Long ver = d.getVersion() == null ? 0L : d.getVersion();
+    try {
+      var f = Book.class.getDeclaredField("version");
+      f.setAccessible(true);
+      f.set(b, ver);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      throw new IllegalStateException("Cannot set Book.version", e);
+    }
+    return b;
+  }
+
+  private Book reuse(BookDoc d) {
+    // Return the same in-memory instance per Mongo _id
+    Book b = identityMap.computeIfAbsent(d.getId(), id -> toDomain(d));
+
+    // Keep the optimistic-lock version in sync with the doc
+    Long ver = d.getVersion() == null ? 0L : d.getVersion();
+    try {
+      var f = Book.class.getDeclaredField("version");
+      f.setAccessible(true);
+      f.set(b, ver);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      throw new IllegalStateException("Cannot set Book.version", e);
+    }
+
     return b;
   }
 
   private List<Book> mapAll(List<BookDoc> docs) {
-    return docs.stream().map(this::toDomain).toList();
+    return docs.stream().map(this::reuse).toList();
   }
 
   private static String ciStartsWith(String s) {
@@ -89,7 +116,7 @@ public class BookMongoRepository implements BookRepository {
 
   @Override
   public Optional<Book> findByIsbn(String isbn) {
-    return repo.findByIsbn(isbn).map(this::toDomain);
+    return repo.findByIsbn(isbn).map(this::reuse);
   }
 
   @Override
@@ -177,13 +204,14 @@ public class BookMongoRepository implements BookRepository {
       throw new IllegalStateException("Book pk must be assigned before saving");
     }
     var saved = repo.save(mapper.toDoc(book));
-    return toDomain(saved);
+    return reuse(saved);
   }
 
   @Override
   public void delete(Book book) {
     if (book == null || book.getPk() == null || book.getPk().isBlank()) return;
     repo.deleteById(book.getPk());
+    identityMap.remove(book.getPk());
   }
 
   private record BookCountAgg(String _id, long lendingCount, BookDoc book) {}

@@ -6,6 +6,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import pt.psoft.g1.psoftg1.authormanagement.model.Author;
 import pt.psoft.g1.psoftg1.bookmanagement.model.*;
@@ -80,7 +81,7 @@ public class BookServiceImpl implements BookService {
 	}
 
 
-	@org.springframework.cache.annotation.CacheEvict(cacheNames = "bookByIsbn", key = "#request.isbn")
+	@Transactional
 	@Override
 	public Book update(UpdateBookRequest request, String currentVersion) {
 
