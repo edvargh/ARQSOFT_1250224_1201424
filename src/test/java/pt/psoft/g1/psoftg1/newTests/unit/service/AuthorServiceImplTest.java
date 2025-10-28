@@ -1,9 +1,9 @@
 package pt.psoft.g1.psoftg1.newTests.unit.service;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
@@ -42,12 +42,9 @@ class AuthorServiceImplTest {
   @Mock PhotoRepository photoRepository;
   @Mock IdGenerator idGenerator;
 
+  @InjectMocks
   AuthorServiceImpl service;
 
-  @BeforeEach
-  void setUp() {
-    service = new AuthorServiceImpl(authorRepository, bookRepository, mapper, photoRepository, idGenerator);
-  }
   @Test
   void findAll_delegatesToRepo() {
     when(authorRepository.findAll()).thenReturn(List.of());

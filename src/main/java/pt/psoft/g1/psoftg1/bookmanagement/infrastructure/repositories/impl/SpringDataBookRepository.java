@@ -51,21 +51,21 @@ public interface SpringDataBookRepository  extends BookRepository, BookRepoCusto
     List<Book> findByTitle(@Param("title") String title);
 
     @Query(value = """
-      SELECT b.* 
+      SELECT b.*
       FROM book b
-      JOIN book_authors ba ON b.pk = ba.book_pk
-      JOIN author a ON ba.authors_author_number = a.author_number
-      WHERE a.name LIKE :authorName
-    """, nativeQuery = true)
+      JOIN book_authors ba ON b.book_id = ba.book_book_id
+      JOIN author a        ON ba.authors_author_number = a.author_number
+      WHERE a.name LIKE CONCAT('%', :authorName, '%')
+      """, nativeQuery = true)
     List<Book> findByAuthorName(@Param("authorName") String authorName);
 
     @Query(value = """
-      SELECT b.* 
+      SELECT b.*
       FROM book b
-      JOIN book_authors ba ON b.pk = ba.book_pk
-      JOIN author a ON ba.authors_author_number = a.author_number
+      JOIN book_authors ba ON b.book_id = ba.book_book_id
+      JOIN author a        ON ba.authors_author_number = a.author_number
       WHERE a.author_number = :authorNumber
-    """, nativeQuery = true)
+      """, nativeQuery = true)
     List<Book> findBooksByAuthorNumber(@Param("authorNumber") String authorNumber);
 
 }

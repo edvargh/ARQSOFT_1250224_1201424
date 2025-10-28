@@ -1,5 +1,6 @@
 package pt.psoft.g1.psoftg1.shared.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.JoinColumn;
@@ -24,6 +25,10 @@ public abstract class EntityWithPhoto {
         this.setPhotoInternal(photoUri);
     }
 
+    public void setPhotoEntity(Photo photo) {
+        this.photo = photo;
+    }
+
     protected void setPhotoInternal(String photoURI) {
         if (photoURI == null) {
             this.photo = null;
@@ -35,6 +40,22 @@ public abstract class EntityWithPhoto {
                 //For some reason it failed, let's set to null to avoid invalid references to photos
                 this.photo = null;
             }
+        }
+    }
+
+    @JsonIgnore
+    public String getPhotoId() {
+        return (photo == null ? null : photo.getId());
+    }
+
+    @JsonIgnore
+    public void setPhotoId(@Nullable String id) {
+        if (id == null) {
+            this.photo = null;
+        } else {
+            Photo ref = new Photo();
+            ref.assignIdIfAbsent(id);
+            this.photo = ref;
         }
     }
 }
