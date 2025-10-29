@@ -192,4 +192,21 @@ public class User implements UserDetails {
 		if (id == null || id.isBlank()) throw new IllegalArgumentException("id cannot be blank");
 		this.id = id;
 	}
+
+	@PrePersist
+	void prePersist() {
+
+		var now = LocalDateTime.now();
+		if (this.createdAt == null)  this.createdAt  = now;
+		if (this.modifiedAt == null) this.modifiedAt = now;
+
+		if (this.createdBy == null)  this.createdBy  = "system"; // or "test"
+		if (this.modifiedBy == null) this.modifiedBy = this.createdBy;
+	}
+
+	@PreUpdate
+	void preUpdate() {
+		this.modifiedAt = LocalDateTime.now();
+		if (this.modifiedBy == null) this.modifiedBy = "system";
+	}
 }

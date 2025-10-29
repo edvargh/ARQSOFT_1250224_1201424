@@ -63,15 +63,18 @@ public class LendingMongoRepository implements LendingRepository {
         .toList();
   }
 
-  @Override
-  public Double getAverageDuration() {
+  @Override public Double getAverageDuration() {
     Aggregation agg = newAggregation(
         match(Criteria.where("returnedDate").ne(null)),
-        project().andExpression("{$dateDiff: {startDate: '$startDate', endDate: '$returnedDate', unit: 'day'}}").as("duration"),
+        project().andExpression("{$dateDiff: {startDate: "
+            + "'$startDate', endDate: '$returnedDate', unit: "
+            + "'day'}}").as("duration"),
         group().avg("duration").as("avgDuration")
-    );
-    AggregationResults<AvgResult> result = mongoTemplate.aggregate(agg, "lendings", AvgResult.class);
-    return result.getUniqueMappedResult() != null ? result.getUniqueMappedResult().avgDuration() : 0.0;
+    ); AggregationResults<AvgResult> result =
+        mongoTemplate.aggregate(agg, "lendings",
+            AvgResult.class);
+    return result.getUniqueMappedResult() != null ?
+        result.getUniqueMappedResult().avgDuration() : 0.0;
   }
 
   @Override
