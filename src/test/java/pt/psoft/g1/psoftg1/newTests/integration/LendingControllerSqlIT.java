@@ -16,6 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -39,6 +41,7 @@ import pt.psoft.g1.psoftg1.usermanagement.repositories.UserRepository;
  * Opaque-box integration tests for LendingController against a real SQL backend.
  * Controller → Service → Repos → Domain are all real.
  */
+@WithMockUser(roles = "READER")
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles({"it","sql"})
@@ -127,6 +130,8 @@ class LendingControllerSqlIT extends SqlBackedITBase {
   """.formatted(savedBook.getIsbn(), rd.getReaderNumber());
 
     MvcResult created = mvc.perform(post("/api/lendings")
+            .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+                .user("lib@example.com").roles("LIBRARIAN"))
             .contentType(MediaType.APPLICATION_JSON)
             .content(createBody))
         .andExpect(status().isCreated())
@@ -149,7 +154,10 @@ class LendingControllerSqlIT extends SqlBackedITBase {
   """.formatted(today);
 
     mvc.perform(patch("/api/lendings/{year}/{seq}", year, seq)
-            .with(jwt().jwt(j -> j.claim("sub", sub)))
+            .with(jwt()
+                .jwt(j -> j.claim("sub", sub))
+                .authorities(new SimpleGrantedAuthority("ROLE_READER"))
+            )
             .header("If-Match", etag)
             .contentType(MediaType.APPLICATION_JSON)
             .content(patchBody))
@@ -197,9 +205,14 @@ class LendingControllerSqlIT extends SqlBackedITBase {
   """.formatted(b2.getIsbn(), rd2.getReaderNumber());
 
     MvcResult c1 = mvc.perform(post("/api/lendings")
+            .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+                .user("lib@example.com").roles("LIBRARIAN"))
             .contentType(MediaType.APPLICATION_JSON).content(body1))
         .andExpect(status().isCreated()).andReturn();
+
     MvcResult c2 = mvc.perform(post("/api/lendings")
+            .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+                .user("lib@example.com").roles("LIBRARIAN"))
             .contentType(MediaType.APPLICATION_JSON).content(body2))
         .andExpect(status().isCreated()).andReturn();
 
@@ -223,19 +236,23 @@ class LendingControllerSqlIT extends SqlBackedITBase {
 
     mvc.perform(patch("/api/lendings/{y}/{s}", y1, s1)
             .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt()
-                .jwt(j -> j.claim("sub", sub1)))
+                .jwt(j -> j.claim("sub", sub1))
+            .authorities(new SimpleGrantedAuthority("ROLE_READER")))
             .header("If-Match", etag1)
             .contentType(MediaType.APPLICATION_JSON).content(patch))
         .andExpect(status().isOk());
 
     mvc.perform(patch("/api/lendings/{y}/{s}", y2, s2)
             .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt()
-                .jwt(j -> j.claim("sub", sub2)))
+                .jwt(j -> j.claim("sub", sub2))
+            .authorities(new SimpleGrantedAuthority("ROLE_READER")))
             .header("If-Match", etag2)
             .contentType(MediaType.APPLICATION_JSON).content(patch))
         .andExpect(status().isOk());
 
-    MvcResult avg = mvc.perform(get("/api/lendings/avgDuration"))
+    MvcResult avg = mvc.perform(get("/api/lendings/avgDuration")
+        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+            .user("lib@example.com").roles("LIBRARIAN")))
         .andExpect(status().isOk())
         .andReturn();
 
@@ -249,7 +266,7 @@ class LendingControllerSqlIT extends SqlBackedITBase {
     org.junit.jupiter.api.Assertions.assertTrue(hasNumber, "avgDuration response should include a numeric field");
   }
 
-
+  @WithMockUser(roles = "LIBRARIAN")
   @Test
   void avgDuration_400_whenNoData() throws Exception {
     mvc.perform(get("/api/lendings/avgDuration"))
@@ -259,7 +276,7 @@ class LendingControllerSqlIT extends SqlBackedITBase {
         .andExpect(jsonPath("$.details[0]", containsString("For input string")));
   }
 
-
+  @WithMockUser(roles = "LIBRARIAN")
   @Test
   void overdue_404_whenNoLendings() throws Exception {
     String pageBody = """
@@ -275,6 +292,7 @@ class LendingControllerSqlIT extends SqlBackedITBase {
         .andExpect(jsonPath("$.details[0]", containsString("No lendings to show")));
   }
 
+  @WithMockUser(roles = "LIBRARIAN")
   @Test
   void search_200_happyPath_returnsItems() throws Exception {
     var a = author("Kent Beck");
@@ -305,7 +323,7 @@ class LendingControllerSqlIT extends SqlBackedITBase {
         .andExpect(jsonPath("$.items[*].bookTitle", hasItem("Test-Driven Development")));
   }
 
-
+  @WithMockUser(roles = "LIBRARIAN")
   @Test
   void search_200_emptyOk() throws Exception {
     String body = """
@@ -323,6 +341,7 @@ class LendingControllerSqlIT extends SqlBackedITBase {
         .andExpect(jsonPath("$.items").exists());
   }
 
+  @WithMockUser(roles = "LIBRARIAN")
   @Test
   void create_201_returnsLocationETag_andBodyMapped() throws Exception {
     var a = author("Robert Martin");
@@ -364,9 +383,11 @@ class LendingControllerSqlIT extends SqlBackedITBase {
       { "isbn": "%s", "readerNumber": "%s" }
       """.formatted(savedBook.getIsbn(), rd.getReaderNumber());
 
-    MvcResult created = mvc.perform(post("/api/lendings")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(createBody))
+    MvcResult created = mvc.perform(
+        post("/api/lendings")
+            .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_LIBRARIAN")))
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(createBody))
         .andExpect(status().isCreated())
         .andReturn();
 
@@ -380,7 +401,8 @@ class LendingControllerSqlIT extends SqlBackedITBase {
     String sub = librarian.getId() + "," + librarian.getUsername();
 
     mvc.perform(get("/api/lendings/{year}/{seq}", year, seq)
-            .with(jwt().jwt(j -> j.claim("sub", sub))))
+            .with(jwt().jwt(j -> j.claim("sub", sub))
+                .authorities( new SimpleGrantedAuthority("ROLE_LIBRARIAN"))))
         .andExpect(status().isOk())
         .andExpect(header().string("ETag", not(isEmptyOrNullString())))
         .andExpect(content().contentTypeCompatibleWith("application/hal+json"))
@@ -400,7 +422,9 @@ class LendingControllerSqlIT extends SqlBackedITBase {
       { "isbn": "%s", "readerNumber": "%s" }
       """.formatted(savedBook.getIsbn(), rd.getReaderNumber());
 
-    MvcResult created = mvc.perform(post("/api/lendings")
+    MvcResult created = mvc.perform(
+        post("/api/lendings")
+            .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_LIBRARIAN")))
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
         .andExpect(status().isCreated())
@@ -415,7 +439,9 @@ class LendingControllerSqlIT extends SqlBackedITBase {
     String sub = readerUser.getId() + "," + readerUser.getUsername();
 
     mvc.perform(get("/api/lendings/{year}/{seq}", year, seq)
-            .with(jwt().jwt(j -> j.claim("sub", sub))))
+            .with(jwt()
+                .jwt(j -> j.claim("sub", sub))
+                .authorities(new SimpleGrantedAuthority("ROLE_READER"))))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.lendingNumber").value(ln))
         .andExpect(jsonPath("$.bookTitle").value("Test-Driven Development"));
@@ -433,7 +459,9 @@ class LendingControllerSqlIT extends SqlBackedITBase {
       { "isbn": "%s", "readerNumber": "%s" }
       """.formatted(savedBook.getIsbn(), ownerDetails.getReaderNumber());
 
-    MvcResult created = mvc.perform(post("/api/lendings")
+    MvcResult created = mvc.perform(
+        post("/api/lendings")
+            .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_LIBRARIAN")))
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
         .andExpect(status().isCreated())
@@ -450,7 +478,9 @@ class LendingControllerSqlIT extends SqlBackedITBase {
     String sub = otherUser.getId() + "," + otherUser.getUsername();
 
     mvc.perform(get("/api/lendings/{year}/{seq}", year, seq)
-            .with(jwt().jwt(j -> j.claim("sub", sub))))
+            .with(jwt()
+                .jwt(j -> j.claim("sub", sub))
+                .authorities(new SimpleGrantedAuthority("ROLE_READER"))))
         .andExpect(status().isForbidden());
   }
 }

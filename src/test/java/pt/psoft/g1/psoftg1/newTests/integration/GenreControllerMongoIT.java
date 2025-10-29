@@ -15,6 +15,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -31,6 +32,7 @@ import pt.psoft.g1.psoftg1.shared.id.IdGenerator;
  * Opaque-box integration tests for GenreController against a real Mongo backend.
  * Controller → Service → Repos → Domain are all real.
  */
+@WithMockUser(roles = "LIBRARIAN")
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles({"it","mongo"})

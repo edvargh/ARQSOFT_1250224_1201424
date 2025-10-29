@@ -23,9 +23,11 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import pt.psoft.g1.psoftg1.authormanagement.model.Author;
 import pt.psoft.g1.psoftg1.authormanagement.repositories.AuthorRepository;
 import pt.psoft.g1.psoftg1.bookmanagement.model.Book;
@@ -47,6 +49,12 @@ import pt.psoft.g1.psoftg1.usermanagement.repositories.UserRepository;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+/**
+ * Opaque-box integration tests for ReaderController against a real SQL backend.
+ * Controller → Service → Repos → Domain are all real.
+ * FileStorageService and ApiNinjasService are stubbed with @MockBean.
+ */
+@WithMockUser(roles = "READER")
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles({"it","sql"})
@@ -125,6 +133,18 @@ class ReaderControllerSqlIT extends SqlBackedITBase {
     return u.getId() + "," + u.getUsername();
   }
 
+  private RequestPostProcessor asReader(User u) {
+    return jwt()
+        .jwt(j -> j.claim("sub", sub(u)))
+        .authorities(new SimpleGrantedAuthority("ROLE_READER"));
+  }
+
+  private RequestPostProcessor asLibrarian(User u) {
+    return jwt()
+        .jwt(j -> j.claim("sub", sub(u)))
+        .authorities(new SimpleGrantedAuthority("ROLE_LIBRARIAN"));
+  }
+
   // ------------------- tests ----------------------------------------------
 
   @Test
@@ -133,7 +153,7 @@ class ReaderControllerSqlIT extends SqlBackedITBase {
     var rd = persistReaderDetails(user, 11111);
 
     mvc.perform(get("/api/readers")
-            .with(jwt().jwt(j -> j.claim("sub", sub(user)))))
+            .with(asReader(user)))
         .andExpect(status().isOk())
         .andExpect(header().string("ETag", "\"" + rd.getVersion() + "\""))
         .andExpect(jsonPath("$.readerNumber").value(rd.getReaderNumber()))
@@ -151,14 +171,16 @@ class ReaderControllerSqlIT extends SqlBackedITBase {
     var lib = persistLibrarianUser("lib@example.com", "Lib");
 
     mvc.perform(get("/api/readers")
-            .with(jwt().jwt(j -> j.claim("sub", sub(lib)))))
+            .with(asLibrarian(lib)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(2))));
   }
 
   @Test
   void findByReaderNumber_404_whenMissing() throws Exception {
-    mvc.perform(get("/api/readers/{year}/{seq}", 2099, 999))
+    var lib = persistLibrarianUser("lib-find-missing@example.com", "LF");
+    mvc.perform(get("/api/readers/{year}/{seq}", 2099, 999)
+            .with(asLibrarian(lib)))
         .andExpect(status().isNotFound());
   }
 
@@ -169,7 +191,9 @@ class ReaderControllerSqlIT extends SqlBackedITBase {
     var parts = rd.getReaderNumber().split("/");
     String year = parts[0], seq = parts[1];
 
-    mvc.perform(get("/api/readers/{year}/{seq}", year, seq))
+    var lib = persistLibrarianUser("lib-find-ok@example.com", "LF2");
+    mvc.perform(get("/api/readers/{year}/{seq}", year, seq)
+            .with(asLibrarian(lib)))
         .andExpect(status().isOk())
         .andExpect(header().string("ETag", "\"" + rd.getVersion() + "\""))
         .andExpect(jsonPath("$.readerNumber").value(rd.getReaderNumber()))
@@ -217,7 +241,7 @@ class ReaderControllerSqlIT extends SqlBackedITBase {
     var lib = persistLibrarianUser("lib3@example.com", "Lib Three");
 
     mvc.perform(get("/api/readers/{year}/{seq}/photo", year, seq)
-            .with(jwt().jwt(j -> j.claim("sub", sub(lib)))))
+            .with(asLibrarian(lib)))
         .andExpect(status().isNotFound());
   }
 
@@ -227,7 +251,7 @@ class ReaderControllerSqlIT extends SqlBackedITBase {
     persistReaderDetails(reader, 50002);
 
     mvc.perform(get("/api/readers/photo")
-            .with(jwt().jwt(j -> j.claim("sub", sub(reader)))))
+            .with(asReader(reader)))
         .andExpect(status().isNotFound());
   }
 
@@ -237,7 +261,7 @@ class ReaderControllerSqlIT extends SqlBackedITBase {
     persistReaderDetails(reader, 70001);
 
     mvc.perform(delete("/api/readers/photo")
-            .with(jwt().jwt(j -> j.claim("sub", sub(reader)))))
+            .with(asReader(reader)))
         .andExpect(status().isNotFound());
   }
 
@@ -296,25 +320,26 @@ class ReaderControllerSqlIT extends SqlBackedITBase {
 
     mvc.perform(get("/api/readers/{year}/{seq}/lendings", year, seq)
             .param("isbn", "9780000000000")
-            .with(jwt().jwt(j -> j.claim("sub", sub(other)))))
+            .with(asReader(other)))
         .andExpect(status().isForbidden());
   }
+
 
   @Test
   void getReaderLendings_404_librarianButNoLendings() throws Exception {
     var owner = persistReaderUser("owner2@example.com", "Owner2");
     var ownerDetails = persistReaderDetails(owner, 73001);
-    var lib = persistLibrarianUser("lib4@example.com", "Lib Four");
 
     var parts = ownerDetails.getReaderNumber().split("/");
     String year = parts[0], seq = parts[1];
 
     mvc.perform(get("/api/readers/{year}/{seq}/lendings", year, seq)
             .param("isbn", "9780000000001")
-            .with(jwt().jwt(j -> j.claim("sub", sub(lib)))))
+            .with(asReader(owner)))
         .andExpect(status().isNotFound());
   }
 
+  @WithMockUser(roles = "LIBRARIAN")
   @Test
   void top5_200_ok() throws Exception {
     mvc.perform(get("/api/readers/top5"))
@@ -322,6 +347,7 @@ class ReaderControllerSqlIT extends SqlBackedITBase {
         .andExpect(jsonPath("$.items").exists());
   }
 
+  @WithMockUser(roles = "LIBRARIAN")
   @Test
   void top5ByGenre_404_whenNoData() throws Exception {
     mvc.perform(get("/api/readers/top5ByGenre")
@@ -331,6 +357,7 @@ class ReaderControllerSqlIT extends SqlBackedITBase {
         .andExpect(status().isNotFound());
   }
 
+  @WithMockUser(roles = "LIBRARIAN")
   @Test
   void searchReaders_200_emptyOk() throws Exception {
     String body = """

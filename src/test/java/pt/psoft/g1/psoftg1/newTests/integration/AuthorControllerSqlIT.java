@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -41,6 +42,7 @@ import pt.psoft.g1.psoftg1.shared.services.FileStorageService;
  * Controller → Service → Repos → Domain are all real.
  * FileStorageService is stubbed with @MockBean.
  */
+@WithMockUser(roles = "READER")
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles({"it","sql","redis"})
@@ -93,6 +95,7 @@ class AuthorControllerSqlIT extends SqlBackedITBase {
     }
   }
 
+  @WithMockUser(roles = "LIBRARIAN")
   @Test
   void createAuthor_201_returnsViewAndETag() throws Exception {
     mvc.perform(post("/api/authors")
@@ -135,6 +138,7 @@ class AuthorControllerSqlIT extends SqlBackedITBase {
         .andExpect(jsonPath("$.items[*].name", containsInAnyOrder("Bob Brown", "Bobby Tables")));
   }
 
+  @WithMockUser(roles = "LIBRARIAN")
   @Test
   void partialUpdate_400_withoutIfMatch() throws Exception {
     a("Alice", "Bio");
@@ -144,6 +148,7 @@ class AuthorControllerSqlIT extends SqlBackedITBase {
         .andExpect(status().isBadRequest());
   }
 
+  @WithMockUser(roles = "LIBRARIAN")
   @Test
   void partialUpdate_200_updatesNameAndBio_whenVersionMatches() throws Exception {
     var saved = a("Alice", "Bio");
@@ -213,6 +218,7 @@ class AuthorControllerSqlIT extends SqlBackedITBase {
         .andExpect(content().string(isEmptyString()));
   }
 
+  @WithMockUser(roles = "LIBRARIAN")
   @Test
   void deletePhoto_200_whenPhotoExists_andRemovesIt() throws Exception {
     var photo = new Photo(Path.of("images/p.png"));
@@ -228,12 +234,14 @@ class AuthorControllerSqlIT extends SqlBackedITBase {
         .andExpect(status().isOk());
   }
 
+  @WithMockUser(roles = "LIBRARIAN")
   @Test
   void deletePhoto_404_whenAuthorMissing() throws Exception {
     mvc.perform(delete("/api/authors/{id}/photo", "NOPE"))
         .andExpect(status().isForbidden());
   }
 
+  @WithMockUser(roles = "LIBRARIAN")
   @Test
   void deletePhoto_404_whenNoPhoto() throws Exception {
     var a = a("No Photo", "bio");

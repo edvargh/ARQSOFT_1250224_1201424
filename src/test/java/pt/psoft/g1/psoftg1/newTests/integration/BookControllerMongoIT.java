@@ -22,6 +22,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -40,6 +41,7 @@ import pt.psoft.g1.psoftg1.shared.services.FileStorageService;
  * Controller → Service → Repos → Domain are all real.
  * FileStorageService is stubbed with @MockBean.
  */
+@WithMockUser(roles = "READER")
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles({"it","mongo"})
@@ -89,6 +91,7 @@ class BookControllerMongoIT extends MongoBackedITBase {
 
   // ---------- tests ---------------------------------------------------------
 
+  @WithMockUser(roles = "LIBRARIAN")
   @Test
   void create_201_putWithPhoto_setsETag_andReturnsView() throws Exception {
     var a = author("RobertMartin");
@@ -137,6 +140,7 @@ class BookControllerMongoIT extends MongoBackedITBase {
         .andExpect(status().isNotFound());
   }
 
+  @WithMockUser(roles = "LIBRARIAN")
   @Test
   void updateBook_400_withoutIfMatch() throws Exception {
     var b = book("9780000000002", "Old Title", "Desc", List.of(author("A")));
@@ -150,6 +154,7 @@ class BookControllerMongoIT extends MongoBackedITBase {
             .value(org.hamcrest.Matchers.containsString("You must issue a conditional PATCH")));
   }
 
+  @WithMockUser(roles = "LIBRARIAN")
   @Test
   void getPhoto_200_imageBytes_whenPhotoExists() throws Exception {
     var a = author("Photo Author");
@@ -186,6 +191,7 @@ class BookControllerMongoIT extends MongoBackedITBase {
         .andExpect(content().string(isEmptyString()));
   }
 
+  @WithMockUser(roles = "LIBRARIAN")
   @Test
   void deletePhoto_200_whenPhotoExists_thenGetReturnsEmpty() throws Exception {
     var a = author("Del Photo Author");
@@ -212,6 +218,7 @@ class BookControllerMongoIT extends MongoBackedITBase {
         .andExpect(content().string(isEmptyString()));
   }
 
+  @WithMockUser(roles = "LIBRARIAN")
   @Test
   void deletePhoto_404_whenNoPhoto() throws Exception {
     var b = book("9780000001009", "No Photo", "D", List.of(author("Y")));

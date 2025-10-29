@@ -20,3 +20,8 @@ mvn spring-boot:run -D"spring-boot.run.profiles=mongo,redis,isbn-openlibrary-onl
 # Command to run mutation tests:
 - mvn clean test org.pitest:pitest-maven:mutationCoverage
 
+# Command to run unit and integration tests:
+- mvn verify
+
+# Command to run unit tests:
+- mvn test
