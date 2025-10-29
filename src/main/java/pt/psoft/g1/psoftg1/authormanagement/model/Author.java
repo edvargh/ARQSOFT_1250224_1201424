@@ -84,5 +84,14 @@ public class Author extends EntityWithPhoto {
     public String getBio() {
         return this.bio.toString();
     }
+
+    /**
+     * For persistence mapping only.
+     * Do NOT use in application logic.
+     */
+    @JsonIgnore
+    public void assignVersion(Long v) {
+        this.version = (v == null ? 0L : v.longValue());
+    }
 }
 

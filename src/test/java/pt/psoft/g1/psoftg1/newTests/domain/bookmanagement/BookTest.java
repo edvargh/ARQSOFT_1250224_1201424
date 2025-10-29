@@ -1,6 +1,6 @@
 package pt.psoft.g1.psoftg1.newTests.domain.bookmanagement;
 
-import org.hibernate.StaleObjectStateException;
+import jakarta.persistence.OptimisticLockException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import pt.psoft.g1.psoftg1.authormanagement.model.Author;
@@ -119,7 +119,8 @@ class BookTest {
     UpdateBookRequest req = mock(UpdateBookRequest.class);
     when(req.getTitle()).thenReturn("New Title");
 
-    assertThrows(StaleObjectStateException.class, () -> b.applyPatch(4L, req));
+    OptimisticLockException ex =
+        assertThrows(OptimisticLockException.class, () -> b.applyPatch(4L, req));
   }
 
   @Test

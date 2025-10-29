@@ -3,6 +3,7 @@ package pt.psoft.g1.psoftg1.bookmanagement.api;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.security.PermitAll;
+import jakarta.persistence.OptimisticLockException;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
@@ -92,13 +93,13 @@ public class BookController {
     @GetMapping(value = "/{isbn}")
     public ResponseEntity<BookView> findByIsbn(@PathVariable final String isbn) {
 
-        final var book = bookService.findByIsbn(isbn);
-
-        BookView bookView = bookViewMapper.toBookView(book);
+        var book = bookService.findByIsbn(isbn);
+        var bookView = bookViewMapper.toBookView(book);
+        long ver = (book.getVersion() == null) ? 0L : book.getVersion();
 
         return ResponseEntity.ok()
-                .eTag(Long.toString(book.getVersion()))
-                .body(bookView);
+            .eTag("\"" + ver + "\"")
+            .body(bookView);
     }
 
     @Operation(summary = "Deletes a book photo")
@@ -148,29 +149,31 @@ public class BookController {
                                                @Valid final UpdateBookRequest resource) {
 
         final String ifMatchValue = request.getHeader(ConcurrencyService.IF_MATCH);
+        long version = concurrencyService.getVersionFromIfMatchHeader(ifMatchValue);
         if (ifMatchValue == null || ifMatchValue.isEmpty() || ifMatchValue.equals("null")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "You must issue a conditional PATCH using 'if-match'");
+                "You must issue a conditional PATCH using 'if-match'");
         }
 
         MultipartFile file = resource.getPhoto();
-
-        String fileName = fileStorageService.getRequestPhoto(file);
-
-        if (fileName != null) {
-            resource.setPhotoURI(fileName);
+        if (file != null && !file.isEmpty()) {
+            String fileName = fileStorageService.getRequestPhoto(file);
+            if (fileName != null) {
+                resource.setPhotoURI(fileName);
+            }
         }
 
-        Book book;
         resource.setIsbn(isbn);
         try {
-            book = bookService.update(resource, String.valueOf(concurrencyService.getVersionFromIfMatchHeader(ifMatchValue)));
-        }catch (Exception e){
-            throw new ConflictException("Could not update book: "+ e.getMessage());
-        }
-        return ResponseEntity.ok()
+            Book book = bookService.update(resource, Long.toString(version));
+            return ResponseEntity.ok()
                 .eTag(Long.toString(book.getVersion()))
                 .body(bookViewMapper.toBookView(book));
+        } catch (OptimisticLockException | org.hibernate.StaleObjectStateException ex) {
+            throw new ConflictException("ETag/version mismatch");
+        } catch (Exception e) {
+            throw new ConflictException("Could not update book: " + e.getMessage());
+        }
     }
 
     @Operation(summary = "Gets Books by title or genre")

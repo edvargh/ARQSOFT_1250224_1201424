@@ -13,7 +13,7 @@ public class AuthorDoc {
   private String name;
   private String bio;
 
-  private Long photoId;
+  private String photoId;
 
   @Version
   private Long version;
@@ -24,8 +24,8 @@ public class AuthorDoc {
   public void setName(String name) { this.name = name; }
   public String getBio() { return bio; }
   public void setBio(String bio) { this.bio = bio; }
-  public Long getPhotoId() { return photoId; }
-  public void setPhotoId(Long photoId) { this.photoId = photoId; }
+  public String getPhotoId() { return photoId; }
+  public void setPhotoId(String photoId) { this.photoId = photoId; }
   public Long getVersion() { return version; }
   public void setVersion(Long version) { this.version = version; }
 }

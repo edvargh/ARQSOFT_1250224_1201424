@@ -13,6 +13,7 @@ public class BookMongoMapper {
   public BookDoc toDoc(Book b) {
     return BookDoc.builder()
         .id(b.getPk())
+        .version(b.getVersion())
         .isbn(b.getIsbn())
         .title(b.getTitle().getTitle())
         .description(b.getDescription())

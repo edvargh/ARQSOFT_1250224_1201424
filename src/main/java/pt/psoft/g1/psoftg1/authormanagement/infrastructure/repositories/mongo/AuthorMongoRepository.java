@@ -53,7 +53,13 @@ public class AuthorMongoRepository implements AuthorRepository {
   public Author save(Author author) {
     if (author == null || author.getId() == null || author.getId().isBlank())
       throw new IllegalStateException("Author id must be assigned before saving");
-    var saved = repo.save(mapper.toDoc(author));
+
+    boolean exists = repo.existsById(author.getId());
+    AuthorDoc doc = mapper.toDoc(author);
+    if (!exists) {
+      doc.setVersion(null);
+    }
+    AuthorDoc saved = repo.save(doc);
     return mapper.toDomain(saved);
   }
 

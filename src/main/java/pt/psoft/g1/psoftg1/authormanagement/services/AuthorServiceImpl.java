@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.*;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import pt.psoft.g1.psoftg1.authormanagement.api.AuthorLendingView;
 import pt.psoft.g1.psoftg1.authormanagement.model.Author;
@@ -13,6 +15,7 @@ import pt.psoft.g1.psoftg1.bookmanagement.model.Book;
 import pt.psoft.g1.psoftg1.bookmanagement.repositories.BookRepository;
 import pt.psoft.g1.psoftg1.exceptions.NotFoundException;
 import pt.psoft.g1.psoftg1.shared.id.IdGenerator;
+import pt.psoft.g1.psoftg1.shared.model.Photo;
 import pt.psoft.g1.psoftg1.shared.repositories.PhotoRepository;
 
 import java.util.List;
@@ -33,7 +36,6 @@ public class AuthorServiceImpl implements AuthorService {
     }
 
     @Override
-    @Cacheable(value = "authorById", key = "#authorId")
     public Optional<Author> findByAuthorNumber(final String authorId) {
         return authorRepository.findByAuthorNumber(authorId);
     }
@@ -94,18 +96,34 @@ public class AuthorServiceImpl implements AuthorService {
     public List<Author> findCoAuthorsByAuthorNumber(String authorId) {
         return authorRepository.findCoAuthorsByAuthorNumber(authorId);
     }
+
+    @Transactional
     @Override
     @CacheEvict(value = {"authorById","authorSearch"}, allEntries = true)
     public Optional<Author> removeAuthorPhoto(String authorId, long desiredVersion) {
         Author author = authorRepository.findByAuthorNumber(authorId)
                 .orElseThrow(() -> new NotFoundException("Cannot find reader"));
 
-        String photoFile = author.getPhoto().getPhotoFile();
+        if (author.getPhoto() == null) {
+            return Optional.of(author);
+        }
+
+        Photo photo = author.getPhoto();
+        String photoFile = photo.getPhotoFile();
+
         author.removePhoto(desiredVersion);
-        Optional<Author> updatedAuthor = Optional.of(authorRepository.save(author));
+        authorRepository.save(author);
+
+        flushIfJpa(authorRepository);
+
         photoRepository.deleteByPhotoFile(photoFile);
-        return updatedAuthor;
+        return Optional.of(author);
     }
 
+    private static void flushIfJpa(Object repo) {
+        if (repo instanceof JpaRepository jpaRepo) {
+            jpaRepo.flush();
+        }
+    }
 }
 
