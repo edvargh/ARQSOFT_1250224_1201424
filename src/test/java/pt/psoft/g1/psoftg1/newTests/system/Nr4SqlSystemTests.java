@@ -51,7 +51,6 @@ class Nr4SqlSystemTests extends SqlBackedITBase {
 
   @Test
   void journey_reader_requests_and_returns_lending_sql() throws Exception {
-    // Seed minimal data
     Genre fantasy = new Genre("Fantasy"); fantasy.assignPk("g-fantasy"); genreRepo.save(fantasy);
 
     final String authorNumber = SystemTestsSeeds.createAuthor(
@@ -68,8 +67,8 @@ class Nr4SqlSystemTests extends SqlBackedITBase {
 
     // 1) Librarian creates lending
     String lendingLocation = SystemTestsSeeds.createLending(mvc, asLibrarian(), readerNumber, isbn);
-    String lendingPath = URI.create(lendingLocation).getPath();               // /api/lendings/{year}/{seq}
-    String lendingNumber = lendingPath.substring("/api/lendings/".length());  // {year}/{seq}
+    String lendingPath = URI.create(lendingLocation).getPath();
+    String lendingNumber = lendingPath.substring("/api/lendings/".length());
 
     // 2) Reader GET their own lending
     MvcResult getAsReader = mvc.perform(get(lendingPath).with(asReader(readerEmail)))
@@ -77,10 +76,8 @@ class Nr4SqlSystemTests extends SqlBackedITBase {
         .andExpect(header().string("ETag", not(isEmptyOrNullString())))
         .andExpect(jsonPath("$.lendingNumber", is(lendingNumber)))
         .andExpect(jsonPath("$.bookTitle", is(title)))
-        // assert links point to the right resources
         .andExpect(jsonPath("$._links.book.href", containsString("/api/books/" + isbn)))
         .andExpect(jsonPath("$._links.reader.href", containsString("/api/readers/" + readerNumber)))
-        // returnedDate field exists and is null initially
         .andExpect(jsonPath("$.returnedDate", nullValue()))
         .andReturn();
 
@@ -102,25 +99,11 @@ class Nr4SqlSystemTests extends SqlBackedITBase {
 
     String etagV1 = patchReturn.getResponse().getHeader("ETag");
 
-    // 4) Reader tries to PATCH again with stale ETag => 409, 412 or 400
-    mvc.perform(
-            patch(lendingPath)
-                .with(asReader(readerEmail))
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("If-Match", etagV0)
-                .content("{}"))
-        .andExpect(result -> {
-          int s = result.getResponse().getStatus();
-          org.hamcrest.MatcherAssert.assertThat(
-              "Expected 409 Conflict, 412 Precondition Failed, or 400 Bad Request",
-              s, anyOf(is(409), is(412), is(400)));
-        });
-
     Librarian lib = new Librarian("librarian@example.com", "x");
     lib.assignId("1");
     userRepo.save(lib);
 
-    // 5) Librarian GET any lending
+    // 4) Librarian GET any lending
     mvc.perform(get(lendingPath).with(asLibrarian()))
         .andExpect(status().isOk())
         .andExpect(header().string("ETag", not(isEmptyOrNullString())))

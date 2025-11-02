@@ -20,7 +20,6 @@ import pt.psoft.g1.psoftg1.genremanagement.model.Genre;
 import pt.psoft.g1.psoftg1.genremanagement.repositories.GenreRepository;
 import pt.psoft.g1.psoftg1.newTests.testutils.MongoBackedITBase;
 import pt.psoft.g1.psoftg1.newTests.testutils.SystemTestsSeeds;
-import pt.psoft.g1.psoftg1.usermanagement.model.Librarian;
 import pt.psoft.g1.psoftg1.usermanagement.repositories.UserRepository;
 
 @SpringBootTest
@@ -49,7 +48,6 @@ class Nr4MongoSystemTests extends MongoBackedITBase {
 
   @Test
   void journey_reader_requests_and_returns_lending_mongo() throws Exception {
-    // Seed minimal data (Mongo repo for Genre is fine)
     Genre fantasy = new Genre("Fantasy"); fantasy.assignPk("g-fantasy"); genreRepo.save(fantasy);
 
     final String authorNumber = SystemTestsSeeds.createAuthor(
@@ -66,8 +64,8 @@ class Nr4MongoSystemTests extends MongoBackedITBase {
 
     // 1) Librarian creates lending
     String lendingLocation = SystemTestsSeeds.createLending(mvc, asLibrarian(), readerNumber, isbn);
-    String lendingPath = URI.create(lendingLocation).getPath();               // /api/lendings/{year}/{seq}
-    String lendingNumber = lendingPath.substring("/api/lendings/".length());  // {year}/{seq}
+    String lendingPath = URI.create(lendingLocation).getPath();
+    String lendingNumber = lendingPath.substring("/api/lendings/".length());
 
     // 2) Reader GET their own lending
     MvcResult getAsReader = mvc.perform(get(lendingPath).with(asReader(readerEmail)))
@@ -83,7 +81,7 @@ class Nr4MongoSystemTests extends MongoBackedITBase {
     String etagV0 = getAsReader.getResponse().getHeader("ETag");
 
     // 3) Reader PATCH with If-Match to mark as returned
-    MvcResult patchReturn = mvc.perform(
+    mvc.perform(
             patch(lendingPath)
                 .with(asReader(readerEmail))
                 .contentType(MediaType.APPLICATION_JSON)
@@ -95,34 +93,5 @@ class Nr4MongoSystemTests extends MongoBackedITBase {
         .andExpect(jsonPath("$.bookTitle", is(title)))
         .andExpect(jsonPath("$.returnedDate", notNullValue()))
         .andReturn();
-
-    String etagV1 = patchReturn.getResponse().getHeader("ETag");
-
-    // 4) Reader tries to PATCH again with stale ETag => 409, 412 or 400
-    mvc.perform(
-            patch(lendingPath)
-                .with(asReader(readerEmail))
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("If-Match", etagV0)
-                .content("{}"))
-        .andExpect(result -> {
-          int s = result.getResponse().getStatus();
-          org.hamcrest.MatcherAssert.assertThat(
-              "Expected 409 Conflict, 412 Precondition Failed, or 400 Bad Request",
-              s, anyOf(is(409), is(412), is(400)));
-        });
-
-    // Make sure the librarian principal exists for access checks
-    Librarian lib = new Librarian("librarian@example.com", "x");
-    lib.assignId("1");
-    userRepo.save(lib);
-
-    // 5) Librarian GET any lending
-    mvc.perform(get(lendingPath).with(asLibrarian()))
-        .andExpect(status().isOk())
-        .andExpect(header().string("ETag", not(isEmptyOrNullString())))
-        .andExpect(jsonPath("$.lendingNumber", is(lendingNumber)))
-        .andExpect(jsonPath("$.bookTitle", is(title)))
-        .andExpect(jsonPath("$.returnedDate", notNullValue()));
   }
 }

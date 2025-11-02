@@ -11,8 +11,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.junit.jupiter.Container;
 import pt.psoft.g1.psoftg1.newTests.testutils.MongoBackedITBase;
 
 @SpringBootTest
@@ -21,6 +25,17 @@ import pt.psoft.g1.psoftg1.newTests.testutils.MongoBackedITBase;
 class Nr5MongoSystemTests extends MongoBackedITBase {
 
   @Autowired MockMvc mvc;
+
+  @Container
+  static final GenericContainer<?> redis = new GenericContainer<>("redis:7.2-alpine").withExposedPorts(6379);
+
+  static { redis.start(); }
+
+  @DynamicPropertySource
+  static void redisProps(DynamicPropertyRegistry r) {
+    r.add("spring.data.redis.host", redis::getHost);
+    r.add("spring.data.redis.port", () -> redis.getMappedPort(6379));
+  }
 
   private static org.springframework.test.web.servlet.request.RequestPostProcessor asLibrarian() {
     return jwt()
