@@ -5,7 +5,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -16,14 +15,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import pt.psoft.g1.psoftg1.genremanagement.model.Genre;
 import pt.psoft.g1.psoftg1.genremanagement.repositories.GenreRepository;
-import pt.psoft.g1.psoftg1.newTests.testutils.SqlBackedITBase;
+import pt.psoft.g1.psoftg1.newTests.testutils.MongoBackedITBase;
 import pt.psoft.g1.psoftg1.newTests.testutils.SystemTestsSeeds;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles({"it","sql"})
-@Transactional
-class ReaderJourney2SqlSystemTests extends SqlBackedITBase {
+@ActiveProfiles({"it","mongo"})
+class Nr3MongoSystemTests extends MongoBackedITBase {
 
   @Autowired MockMvc mvc;
 
@@ -32,8 +30,8 @@ class ReaderJourney2SqlSystemTests extends SqlBackedITBase {
   private static RequestPostProcessor asReader() {
     return jwt()
         .jwt(j -> {
-          j.claim("sub", "2,reader@example.com");                // <— principal = username
-          j.claim("preferred_username", "reader@example.com"); // (belt & suspenders)
+          j.claim("sub", "2,reader@example.com");
+          j.claim("preferred_username", "reader@example.com");
         })
         .authorities(new SimpleGrantedAuthority("ROLE_READER"));
   }
@@ -45,9 +43,9 @@ class ReaderJourney2SqlSystemTests extends SqlBackedITBase {
   }
 
   @Test
-  void journey_reader_browses_searches_gets_suggestions() throws Exception {
+  void journey_reader_browses_searches_gets_suggestions_mongo() throws Exception {
     // ---- Seed minimal data (using librarian-capable helpers where needed) ----
-    // Genres
+    // Genres (persist directly via repository to avoid depending on admin endpoints)
     Genre fantasy = new Genre("Fantasy"); fantasy.assignPk("g-fantasy"); genreRepo.save(fantasy);
     Genre mystery = new Genre("Mystery"); mystery.assignPk("g-mystery"); genreRepo.save(mystery);
 
@@ -60,7 +58,7 @@ class ReaderJourney2SqlSystemTests extends SqlBackedITBase {
     final String author2Bio  = "Norwegian writer of crime fiction.";
     String author2Number = SystemTestsSeeds.createAuthor(mvc, asLibrarian(), author2Name, author2Bio);
 
-    // Books linked to authors (PUT /api/books/{isbn})
+    // Books linked to authors
     final String isbn1 = "9780306406157";
     final String title1 = "Moominland";
     final String desc1  = "A classic adventure in Moominvalley.";
@@ -71,14 +69,13 @@ class ReaderJourney2SqlSystemTests extends SqlBackedITBase {
     final String desc2  = "Harry Hole investigates a chilling case.";
     SystemTestsSeeds.putBook(mvc, asLibrarian(), isbn2, title2, "Mystery", desc2, author2Number);
 
+    // Reader (returns "YYYY/N")
     String readerNumber = SystemTestsSeeds.createReader(mvc,
         "reader2@example.com", "Reader Two", "900000000");
 
-    SystemTestsSeeds.createLending(mvc, asLibrarian(),
-        readerNumber, isbn1);
-
-    SystemTestsSeeds.createLending(mvc, asLibrarian(),
-        readerNumber, isbn2);
+    // Lendings
+    SystemTestsSeeds.createLending(mvc, asLibrarian(), readerNumber, isbn1);
+    SystemTestsSeeds.createLending(mvc, asLibrarian(), readerNumber, isbn2);
 
     // ========================================================================
     // 1) GET /api/books with filters (title, genre)
@@ -96,7 +93,6 @@ class ReaderJourney2SqlSystemTests extends SqlBackedITBase {
         .andExpect(status().isOk())
         .andExpect(header().string("ETag", not(isEmptyOrNullString())))
         .andExpect(jsonPath("$.items", not(empty())))
-        // Expect our fantasy book present
         .andExpect(jsonPath("$.items[*].isbn", hasItem(isbn1)));
 
     // ========================================================================
@@ -109,7 +105,7 @@ class ReaderJourney2SqlSystemTests extends SqlBackedITBase {
         .andExpect(jsonPath("$.items[*].name", hasItem(containsStringIgnoringCase("jo"))));
 
     // ========================================================================
-    // 3) GET /api/authors/top5 — confirm reader can access it
+    // 3) GET /api/authors/top5 — reader can access
     // ========================================================================
     mvc.perform(get("/api/authors/top5").with(asReader()))
         .andExpect(status().isOk())
@@ -118,7 +114,7 @@ class ReaderJourney2SqlSystemTests extends SqlBackedITBase {
         .andExpect(jsonPath("$.items.length()", lessThanOrEqualTo(5)));
 
     // ========================================================================
-    // 4) GET /api/genres/top5 — confirm forbidden (librarian-only)
+    // 4) GET /api/genres/top5 — forbidden to reader
     // ========================================================================
     mvc.perform(get("/api/genres/top5").with(asReader()))
         .andExpect(status().isForbidden());

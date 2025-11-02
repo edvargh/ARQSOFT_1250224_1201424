@@ -25,7 +25,7 @@ import pt.psoft.g1.psoftg1.newTests.testutils.SystemTestsSeeds;
 @AutoConfigureMockMvc
 @ActiveProfiles({"it","sql"})
 @Transactional
-class LibrarianJourney1SqlSystemTests extends SqlBackedITBase {
+class Nr1SqlSystemTests extends SqlBackedITBase {
 
   @Autowired MockMvc mvc;
 

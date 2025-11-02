@@ -26,7 +26,7 @@ import pt.psoft.g1.psoftg1.usermanagement.repositories.UserRepository;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles({"it","mongo"})
-class ReaderJourney3MongoSystemTests extends MongoBackedITBase {
+class Nr4MongoSystemTests extends MongoBackedITBase {
 
   @Autowired MockMvc mvc;
   @Autowired UserRepository userRepo;

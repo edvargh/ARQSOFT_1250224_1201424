@@ -23,7 +23,7 @@ import pt.psoft.g1.psoftg1.newTests.testutils.SystemTestsSeeds;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles({"it","mongo"})
-class LibrarianJourney1MongoSystemTests extends MongoBackedITBase {
+class Nr1MongoSystemTests extends MongoBackedITBase {
 
   @Autowired MockMvc mvc;
 

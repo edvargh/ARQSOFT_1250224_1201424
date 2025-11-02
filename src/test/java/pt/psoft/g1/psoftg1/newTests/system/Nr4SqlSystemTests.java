@@ -28,7 +28,7 @@ import pt.psoft.g1.psoftg1.usermanagement.repositories.UserRepository;
 @AutoConfigureMockMvc
 @ActiveProfiles({"it","sql"})
 @Transactional
-class ReaderJourney3SqlSystemTests extends SqlBackedITBase {
+class Nr4SqlSystemTests extends SqlBackedITBase {
 
   @Autowired MockMvc mvc;
   @Autowired UserRepository userRepo;
