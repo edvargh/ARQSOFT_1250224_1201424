@@ -62,7 +62,7 @@ class Nr1SqlSystemTests extends SqlBackedITBase {
             .with(asLibrarian());
     patchAuthor.with(req -> { req.setMethod("PATCH"); return req; });
     patchAuthor.header("If-Match", etag);
-    patchAuthor.param("bio", updatedBio); // UpdateAuthorRequest accepts bio/name/photo
+    patchAuthor.param("bio", updatedBio);
 
     mvc.perform(patchAuthor)
         .andExpect(status().isOk())

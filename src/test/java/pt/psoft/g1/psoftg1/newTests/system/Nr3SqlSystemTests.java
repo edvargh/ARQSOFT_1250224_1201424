@@ -32,8 +32,8 @@ class Nr3SqlSystemTests extends SqlBackedITBase {
   private static RequestPostProcessor asReader() {
     return jwt()
         .jwt(j -> {
-          j.claim("sub", "2,reader@example.com");                // <— principal = username
-          j.claim("preferred_username", "reader@example.com"); // (belt & suspenders)
+          j.claim("sub", "2,reader@example.com");
+          j.claim("preferred_username", "reader@example.com");
         })
         .authorities(new SimpleGrantedAuthority("ROLE_READER"));
   }
@@ -46,7 +46,6 @@ class Nr3SqlSystemTests extends SqlBackedITBase {
 
   @Test
   void journey_reader_browses_searches_gets_suggestions() throws Exception {
-    // ---- Seed minimal data (using librarian-capable helpers where needed) ----
     // Genres
     Genre fantasy = new Genre("Fantasy"); fantasy.assignPk("g-fantasy"); genreRepo.save(fantasy);
     Genre mystery = new Genre("Mystery"); mystery.assignPk("g-mystery"); genreRepo.save(mystery);

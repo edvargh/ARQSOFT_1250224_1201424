@@ -44,8 +44,7 @@ class Nr3MongoSystemTests extends MongoBackedITBase {
 
   @Test
   void journey_reader_browses_searches_gets_suggestions_mongo() throws Exception {
-    // ---- Seed minimal data (using librarian-capable helpers where needed) ----
-    // Genres (persist directly via repository to avoid depending on admin endpoints)
+    // Genres
     Genre fantasy = new Genre("Fantasy"); fantasy.assignPk("g-fantasy"); genreRepo.save(fantasy);
     Genre mystery = new Genre("Mystery"); mystery.assignPk("g-mystery"); genreRepo.save(mystery);
 

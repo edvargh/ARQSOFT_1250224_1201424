@@ -45,7 +45,7 @@ import pt.psoft.g1.psoftg1.shared.services.FileStorageService;
 @WithMockUser(roles = "READER")
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles({"it","sql","redis"})
+@ActiveProfiles({"it","sql"})
 @Transactional
 class AuthorControllerSqlIT extends SqlBackedITBase {
 

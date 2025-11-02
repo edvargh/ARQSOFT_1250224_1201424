@@ -25,7 +25,6 @@ class Nr2MongoSystemTests extends MongoBackedITBase {
 
   @Autowired MockMvc mvc;
 
-  // Use the Mongo-flavored UserRepository bean exposed under the same interface
   @Autowired UserRepository userRepo;
 
   private static RequestPostProcessor asReader(User u) {

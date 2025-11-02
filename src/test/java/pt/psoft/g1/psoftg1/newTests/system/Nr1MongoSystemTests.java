@@ -69,13 +69,12 @@ class Nr1MongoSystemTests extends MongoBackedITBase {
         .andExpect(jsonPath("$.bio").value(updatedBio));
 
     // 4) Create book linked to author (ensure genre exists)
-    final String isbn = "9780306406157";
+    final String isbn = "9780132350884";
     final String title = "Moominland";
     final String initialGenre = "Fantasy";
     final String initialDesc = "A classic adventure in Moominvalley.";
 
     Genre genre = new Genre(initialGenre);
-    // If your Mongo mapping uses a string pk field, setting it is fine; otherwise omit.
     genre.assignPk("12");
     genreRepo.save(genre);
 
