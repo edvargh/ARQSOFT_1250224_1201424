@@ -12,6 +12,7 @@ import pt.psoft.g1.psoftg1.lendingmanagement.model.Lending;
 import pt.psoft.g1.psoftg1.lendingmanagement.repositories.FineRepository;
 import pt.psoft.g1.psoftg1.lendingmanagement.repositories.LendingRepository;
 import pt.psoft.g1.psoftg1.readermanagement.repositories.ReaderRepository;
+import pt.psoft.g1.psoftg1.shared.id.IdGenerator;
 import pt.psoft.g1.psoftg1.shared.services.Page;
 
 import java.time.LocalDate;
@@ -28,6 +29,7 @@ public class LendingServiceImpl implements LendingService{
     private final FineRepository fineRepository;
     private final BookRepository bookRepository;
     private final ReaderRepository readerRepository;
+    private final IdGenerator idGenerator;
 
     @Value("${lendingDurationInDays}")
     private int lendingDurationInDays;
@@ -58,28 +60,24 @@ public class LendingServiceImpl implements LendingService{
     @Override
     public Lending create(final CreateLendingRequest resource) {
         int count = 0;
-
         Iterable<Lending> lendingList = lendingRepository.listOutstandingByReaderNumber(resource.getReaderNumber());
         for (Lending lending : lendingList) {
-            //Business rule: cannot create a lending if user has late outstanding books to return.
-            if (lending.getDaysDelayed() > 0) {
+            if (lending.getDaysDelayed() > 0)
                 throw new LendingForbiddenException("Reader has book(s) past their due date");
-            }
-            count++;
-            //Business rule: cannot create a lending if user already has 3 outstanding books to return.
-            if (count >= 3) {
+            if (++count >= 3)
                 throw new LendingForbiddenException("Reader has three books outstanding already");
-            }
         }
 
-        final var b = bookRepository.findByIsbn(resource.getIsbn())
-                .orElseThrow(() -> new NotFoundException("Book not found"));
-        final var r = readerRepository.findByReaderNumber(resource.getReaderNumber())
-                .orElseThrow(() -> new NotFoundException("Reader not found"));
-        int seq = lendingRepository.getCountFromCurrentYear()+1;
-        final Lending l = new Lending(b,r,seq, lendingDurationInDays, fineValuePerDayInCents );
+        var book = bookRepository.findByIsbn(resource.getIsbn())
+            .orElseThrow(() -> new NotFoundException("Book not found"));
+        var reader = readerRepository.findByReaderNumber(resource.getReaderNumber())
+            .orElseThrow(() -> new NotFoundException("Reader not found"));
 
-        return lendingRepository.save(l);
+        int seq = lendingRepository.getCountFromCurrentYear() + 1;
+        Lending lending = new Lending(book, reader, seq, lendingDurationInDays, fineValuePerDayInCents);
+        lending.assignId(idGenerator.newId());
+
+        return lendingRepository.save(lending);
     }
 
     @Override
@@ -92,6 +90,7 @@ public class LendingServiceImpl implements LendingService{
 
         if(lending.getDaysDelayed() > 0){
             final var fine = new Fine(lending);
+            fine.assignId(idGenerator.newId());
             fineRepository.save(fine);
         }
 

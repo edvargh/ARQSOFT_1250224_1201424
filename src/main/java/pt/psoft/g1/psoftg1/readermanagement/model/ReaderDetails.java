@@ -17,8 +17,8 @@ import java.util.List;
 @Table(name = "READER_DETAILS")
 public class ReaderDetails extends EntityWithPhoto {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long pk;
+    @Column(name = "PK", length = 64, updatable = false, nullable = false)
+    private String pk;
 
     @Getter
     @Setter
@@ -163,6 +163,14 @@ public class ReaderDetails extends EntityWithPhoto {
     }
 
     public String getPhoneNumber() { return this.phoneNumber.toString();}
+
+    public String getId() { return pk; }
+
+    public void assignId(String id) {
+        if (id == null || id.isBlank()) throw new IllegalArgumentException("id cannot be null/blank");
+        if (this.pk != null) throw new IllegalStateException("id already assigned");
+        this.pk = id;
+    }
 
     protected ReaderDetails() {
         // for ORM only

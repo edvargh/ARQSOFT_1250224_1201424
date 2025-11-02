@@ -6,6 +6,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import pt.psoft.g1.psoftg1.authormanagement.model.Author;
 import pt.psoft.g1.psoftg1.bookmanagement.model.*;
@@ -18,6 +19,7 @@ import pt.psoft.g1.psoftg1.exceptions.NotFoundException;
 import pt.psoft.g1.psoftg1.genremanagement.model.Genre;
 import pt.psoft.g1.psoftg1.readermanagement.model.ReaderDetails;
 import pt.psoft.g1.psoftg1.readermanagement.repositories.ReaderRepository;
+import pt.psoft.g1.psoftg1.shared.id.IdGenerator;
 import pt.psoft.g1.psoftg1.shared.repositories.PhotoRepository;
 import pt.psoft.g1.psoftg1.shared.services.Page;
 
@@ -36,10 +38,12 @@ public class BookServiceImpl implements BookService {
 	private final AuthorRepository authorRepository;
 	private final PhotoRepository photoRepository;
 	private final ReaderRepository readerRepository;
+	private final IdGenerator idGenerator;
 
 	@Value("${suggestionsLimitPerGenre}")
 	private long suggestionsLimitPerGenre;
 
+	@org.springframework.cache.annotation.CacheEvict(cacheNames = "bookByIsbn", key = "#isbn")
 	@Override
 	public Book create(CreateBookRequest request, String isbn) {
 
@@ -47,9 +51,9 @@ public class BookServiceImpl implements BookService {
 			throw new ConflictException("Book with ISBN " + isbn + " already exists");
 		}
 
-		List<Long> authorNumbers = request.getAuthors();
+		List<String> authorNumbers = request.getAuthors();
 		List<Author> authors = new ArrayList<>();
-		for (Long authorNumber : authorNumbers) {
+		for (String authorNumber : authorNumbers) {
 
 			Optional<Author> temp = authorRepository.findByAuthorNumber(authorNumber);
 			if(temp.isEmpty()) {
@@ -71,19 +75,21 @@ public class BookServiceImpl implements BookService {
 				.orElseThrow(() -> new NotFoundException("Genre not found"));
 
 		Book newBook = new Book(isbn, request.getTitle(), request.getDescription(), genre, authors, photoURI);
+		newBook.assignPk(idGenerator.newId());
 
-        return bookRepository.save(newBook);
+		return bookRepository.save(newBook);
 	}
 
 
+	@Transactional
 	@Override
 	public Book update(UpdateBookRequest request, String currentVersion) {
 
         var book = findByIsbn(request.getIsbn());
         if(request.getAuthors()!= null) {
-            List<Long> authorNumbers = request.getAuthors();
+            List<String> authorNumbers = request.getAuthors();
             List<Author> authors = new ArrayList<>();
-            for (Long authorNumber : authorNumbers) {
+            for (String authorNumber : authorNumbers) {
                 Optional<Author> temp = authorRepository.findByAuthorNumber(authorNumber);
                 if (temp.isEmpty()) {
                     continue;
@@ -130,6 +136,7 @@ public class BookServiceImpl implements BookService {
 		return this.bookRepository.findTop5BooksLent(oneYearAgo, pageableRules).getContent();
 	}
 
+	@org.springframework.cache.annotation.CacheEvict(cacheNames = "bookByIsbn", key = "#isbn")
 	@Override
 	public Book removeBookPhoto(String isbn, long desiredVersion) {
 		Book book = this.findByIsbn(isbn);
@@ -160,6 +167,7 @@ public class BookServiceImpl implements BookService {
 		return bookRepository.findByAuthorName(authorName + "%");
 	}
 
+	@org.springframework.cache.annotation.Cacheable(cacheNames = "bookByIsbn", key = "#isbn")
 	public Book findByIsbn(String isbn) {
 		return this.bookRepository.findByIsbn(isbn)
 				.orElseThrow(() -> new NotFoundException(Book.class, isbn));

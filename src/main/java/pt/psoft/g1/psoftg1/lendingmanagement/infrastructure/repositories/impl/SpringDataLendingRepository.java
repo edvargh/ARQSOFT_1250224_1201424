@@ -57,19 +57,27 @@ public interface SpringDataLendingRepository extends LendingRepository, LendingR
     List<Lending> listOutstandingByReaderNumber(@Param("readerNumber") String readerNumber);
 
     @Override
-    @Query(value =
-            "SELECT AVG(DATEDIFF(day, l.start_date, l.returned_date)) " +
-            "FROM Lending l"
-            , nativeQuery = true)
+    @Query(
+        value = """
+              SELECT AVG(TIMESTAMPDIFF(DAY, l.start_date, l.returned_date))
+              FROM lending l
+              WHERE l.returned_date IS NOT NULL
+              """,
+        nativeQuery = true
+    )
     Double getAverageDuration();
 
     @Override
-    @Query(value =
-            "SELECT AVG(DATEDIFF(day, l.start_date, l.returned_date)) " +
-                    "FROM Lending l " +
-                    "JOIN BOOK b ON l.BOOK_PK = b.PK " +
-                    "WHERE b.ISBN = :isbn"
-            , nativeQuery = true)
+    @Query(
+        value = """
+              SELECT AVG(TIMESTAMPDIFF(DAY, l.start_date, l.returned_date))
+              FROM lending l
+              JOIN book b ON l.book_pk = b.pk
+              WHERE l.returned_date IS NOT NULL
+                AND b.isbn = :isbn
+              """,
+        nativeQuery = true
+    )
     Double getAvgLendingDurationByIsbn(@Param("isbn") String isbn);
 
 
