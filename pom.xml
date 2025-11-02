@@ -178,6 +178,33 @@
 							</systemPropertyVariables>
 						</configuration>
 					</execution>
+
+					<execution>
+						<id>system-sql</id>
+						<goals><goal>integration-test</goal><goal>verify</goal></goals>
+						<configuration>
+							<includes>
+								<include>**/*SqlSystemTests.java</include>
+							</includes>
+							<systemPropertyVariables>
+								<spring.profiles.active>it,sql</spring.profiles.active>
+							</systemPropertyVariables>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>system-mongo</id>
+						<goals><goal>integration-test</goal><goal>verify</goal></goals>
+						<configuration>
+							<includes>
+								<include>**/*MongoSystemTests.java</include>
+							</includes>
+							<systemPropertyVariables>
+								<spring.profiles.active>it,mongo</spring.profiles.active>
+							</systemPropertyVariables>
+						</configuration>
+					</execution>
+
 				</executions>
 			</plugin>
 
