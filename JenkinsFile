@@ -1,0 +1,56 @@
+pipeline {
+    agent any
+
+    tools {
+        maven 'Maven3' 
+        jdk 'JDK21'    
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/edvargh/ARQSOFT_1250224_1201424'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
+        stage('Run Unit Tests') {
+            steps {
+                sh 'mvn test'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('Code Analysis (SonarQube)') {
+            steps {
+                echo 'SonarQube analysis placeholder'
+                // Exemplo: sh 'mvn sonar:sonar'
+            }
+        }
+
+        stage('Deploy (local)') {
+            steps {
+                echo 'Deploying to local environment...'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Build and tests succeeded!'
+        }
+        failure {
+            echo 'Build failed!'
+        }
+    }
+}
