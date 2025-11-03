@@ -38,8 +38,8 @@ public class Lending {
      * @author pgsousa
      */
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long pk;
+    @Column(length = 36, nullable = false, updatable = false)
+    private String pk;
 
     /**
      * Natural key, which is not in use as it has its own business rules.
@@ -143,6 +143,16 @@ public class Lending {
         this.fineValuePerDayInCents = fineValuePerDayInCents;
         setDaysUntilReturn();
         setDaysOverdue();
+    }
+
+    public void assignId(String id) {
+        if (id == null || id.isBlank())
+            throw new IllegalArgumentException("id cannot be blank");
+        this.pk = id;
+    }
+
+    public String getId() {
+        return this.pk;
     }
 
     /**

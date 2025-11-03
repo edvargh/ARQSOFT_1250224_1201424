@@ -31,6 +31,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pt.psoft.g1.psoftg1.exceptions.ConflictException;
+import pt.psoft.g1.psoftg1.shared.id.IdGenerator;
 import pt.psoft.g1.psoftg1.shared.repositories.ForbiddenNameRepository;
 import pt.psoft.g1.psoftg1.shared.services.Page;
 import pt.psoft.g1.psoftg1.usermanagement.model.Librarian;
@@ -56,6 +57,8 @@ public class UserService implements UserDetailsService {
 	private final ForbiddenNameRepository forbiddenNameRepository;
 
 	private final PasswordEncoder passwordEncoder;
+
+	private final IdGenerator idGenerator;
 
 	public List<User> findByName(String name){
 		return this.userRepo.findByNameName(name);
@@ -94,11 +97,12 @@ public class UserService implements UserDetailsService {
 		user.setPassword(passwordEncoder.encode(request.getPassword()));
 		//user.addAuthority(new Role(request.getRole()));
 
+		user.assignId(idGenerator.newId());
 		return userRepo.save(user);
 	}
 
 	@Transactional
-	public User update(final Long id, final EditUserRequest request) {
+	public User update(final String id, final EditUserRequest request) {
 		final User user = userRepo.getById(id);
 		userEditMapper.update(request, user);
 
@@ -106,7 +110,7 @@ public class UserService implements UserDetailsService {
 	}
 
 	@Transactional
-	public User delete(final Long id) {
+	public User delete(final String id) {
 		final User user = userRepo.getById(id);
 
 		// user.setUsername(user.getUsername().replace("@", String.format("_%s@",
@@ -125,7 +129,7 @@ public class UserService implements UserDetailsService {
 		return userRepo.findByUsername(username).isPresent();
 	}
 
-	public User getUser(final Long id) {
+	public User getUser(final String id) {
 		return userRepo.getById(id);
 	}
 

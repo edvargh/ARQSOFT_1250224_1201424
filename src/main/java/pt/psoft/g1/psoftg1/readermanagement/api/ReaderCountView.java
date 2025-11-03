@@ -11,4 +11,8 @@ public class ReaderCountView {
     private ReaderView readerView;
 
     private Long lendingCount;
+
+    public Long getBookCount() {
+        return lendingCount;
+    }
 }

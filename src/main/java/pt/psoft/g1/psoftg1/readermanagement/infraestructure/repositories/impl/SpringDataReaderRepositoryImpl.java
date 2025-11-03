@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Optional;
 
 
-public interface SpringDataReaderRepositoryImpl extends ReaderRepository, ReaderDetailsRepoCustom, CrudRepository<ReaderDetails, Long> {
+public interface SpringDataReaderRepositoryImpl extends ReaderRepository, ReaderDetailsRepoCustom, CrudRepository<ReaderDetails, String> {
     @Override
     @Query("SELECT r " +
             "FROM ReaderDetails r " +
@@ -43,13 +43,6 @@ public interface SpringDataReaderRepositoryImpl extends ReaderRepository, Reader
             "JOIN User u ON r.reader.id = u.id " +
             "WHERE u.username = :username")
     Optional<ReaderDetails> findByUsername(@Param("username") @NotNull String username);
-
-    @Override
-    @Query("SELECT r " +
-            "FROM ReaderDetails r " +
-            "JOIN User u ON r.reader.id = u.id " +
-            "WHERE u.id = :userId")
-    Optional<ReaderDetails> findByUserId(@Param("userId") @NotNull Long userId);
 
 
     @Override

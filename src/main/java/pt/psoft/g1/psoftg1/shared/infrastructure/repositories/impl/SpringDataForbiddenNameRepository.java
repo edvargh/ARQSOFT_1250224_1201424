@@ -9,7 +9,7 @@ import pt.psoft.g1.psoftg1.shared.repositories.ForbiddenNameRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface SpringDataForbiddenNameRepository extends ForbiddenNameRepository, CrudRepository<ForbiddenName, Long> {
+public interface SpringDataForbiddenNameRepository extends ForbiddenNameRepository, CrudRepository<ForbiddenName, String> {
     @Query("SELECT fn FROM ForbiddenName fn" +
             " WHERE :pat LIKE CONCAT('%', fn.forbiddenName, '%') ")
     List<ForbiddenName> findByForbiddenNameIsContained(String pat);

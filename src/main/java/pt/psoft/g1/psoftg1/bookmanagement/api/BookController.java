@@ -2,6 +2,8 @@ package pt.psoft.g1.psoftg1.bookmanagement.api;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.security.PermitAll;
+import jakarta.persistence.OptimisticLockException;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import pt.psoft.g1.psoftg1.bookmanagement.model.Book;
 import pt.psoft.g1.psoftg1.bookmanagement.services.BookService;
 import pt.psoft.g1.psoftg1.bookmanagement.services.CreateBookRequest;
+import pt.psoft.g1.psoftg1.bookmanagement.services.IsbnLookupService;
 import pt.psoft.g1.psoftg1.bookmanagement.services.SearchBooksQuery;
 import pt.psoft.g1.psoftg1.bookmanagement.services.UpdateBookRequest;
 import pt.psoft.g1.psoftg1.exceptions.ConflictException;
@@ -37,6 +40,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@PermitAll
 @Tag(name = "Books", description = "Endpoints for managing Books")
 @RestController
 @RequiredArgsConstructor
@@ -48,13 +52,14 @@ public class BookController {
     private final FileStorageService fileStorageService;
     private final UserService userService;
     private final ReaderService readerService;
+    private final IsbnLookupService isbnLookupService;
 
     private final BookViewMapper bookViewMapper;
 
     @Operation(summary = "Register a new Book")
     @PutMapping(value = "/{isbn}")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<BookView> create( CreateBookRequest resource, @PathVariable("isbn") String isbn) {
+    public ResponseEntity<BookView> create(@ModelAttribute CreateBookRequest resource, @PathVariable("isbn") String isbn) {
 
 
         //Guarantee that the client doesn't provide a link on the body, null = no photo or error
@@ -71,6 +76,7 @@ public class BookController {
         try {
             book = bookService.create(resource, isbn);
         }catch (Exception e){
+            e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
         //final var savedBook = bookService.save(book);
@@ -87,13 +93,13 @@ public class BookController {
     @GetMapping(value = "/{isbn}")
     public ResponseEntity<BookView> findByIsbn(@PathVariable final String isbn) {
 
-        final var book = bookService.findByIsbn(isbn);
-
-        BookView bookView = bookViewMapper.toBookView(book);
+        var book = bookService.findByIsbn(isbn);
+        var bookView = bookViewMapper.toBookView(book);
+        long ver = (book.getVersion() == null) ? 0L : book.getVersion();
 
         return ResponseEntity.ok()
-                .eTag(Long.toString(book.getVersion()))
-                .body(bookView);
+            .eTag("\"" + ver + "\"")
+            .body(bookView);
     }
 
     @Operation(summary = "Deletes a book photo")
@@ -143,29 +149,31 @@ public class BookController {
                                                @Valid final UpdateBookRequest resource) {
 
         final String ifMatchValue = request.getHeader(ConcurrencyService.IF_MATCH);
+        long version = concurrencyService.getVersionFromIfMatchHeader(ifMatchValue);
         if (ifMatchValue == null || ifMatchValue.isEmpty() || ifMatchValue.equals("null")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "You must issue a conditional PATCH using 'if-match'");
+                "You must issue a conditional PATCH using 'if-match'");
         }
 
         MultipartFile file = resource.getPhoto();
-
-        String fileName = fileStorageService.getRequestPhoto(file);
-
-        if (fileName != null) {
-            resource.setPhotoURI(fileName);
+        if (file != null && !file.isEmpty()) {
+            String fileName = fileStorageService.getRequestPhoto(file);
+            if (fileName != null) {
+                resource.setPhotoURI(fileName);
+            }
         }
 
-        Book book;
         resource.setIsbn(isbn);
         try {
-            book = bookService.update(resource, String.valueOf(concurrencyService.getVersionFromIfMatchHeader(ifMatchValue)));
-        }catch (Exception e){
-            throw new ConflictException("Could not update book: "+ e.getMessage());
-        }
-        return ResponseEntity.ok()
+            Book book = bookService.update(resource, Long.toString(version));
+            return ResponseEntity.ok()
                 .eTag(Long.toString(book.getVersion()))
                 .body(bookViewMapper.toBookView(book));
+        } catch (OptimisticLockException | org.hibernate.StaleObjectStateException ex) {
+            throw new ConflictException("ETag/version mismatch");
+        } catch (Exception e) {
+            throw new ConflictException("Could not update book: " + e.getMessage());
+        }
     }
 
     @Operation(summary = "Gets Books by title or genre")
@@ -238,6 +246,20 @@ public class BookController {
             @RequestBody final SearchRequest<SearchBooksQuery> request) {
         final var bookList = bookService.searchBooks(request.getPage(), request.getQuery());
         return new ListResponse<>(bookViewMapper.toBookView(bookList));
+    }
+
+    @Operation(summary = "Lookup ISBN(s) by title using external providers (Google/OpenLibrary)")
+    @GetMapping("/isbn")
+    public ResponseEntity<pt.psoft.g1.psoftg1.bookmanagement.services.IsbnLookupResult> lookupIsbnByTitle(
+        @RequestParam("title") String title,
+        @RequestParam(value = "mode", defaultValue = "ANY") pt.psoft.g1.psoftg1.bookmanagement.services.IsbnLookupMode mode) {
+
+        var result = isbnLookupService.getIsbnsByTitle(title, mode);
+
+        if (result.allIsbns().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        return ResponseEntity.ok(result);
     }
 }
 

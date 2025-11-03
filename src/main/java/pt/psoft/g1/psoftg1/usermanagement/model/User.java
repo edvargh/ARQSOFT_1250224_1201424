@@ -55,10 +55,9 @@ public class User implements UserDetails {
 
 	// database primary key
 	@Id
-	@GeneratedValue
+	@Column(name="USER_ID", length = 36, nullable = false, updatable = false)
 	@Getter
-	@Column(name="USER_ID")
-	private Long id;
+	private String id;
 
 	// optimistic lock concurrency control
 	@Version
@@ -162,10 +161,8 @@ public class User implements UserDetails {
 		return u;
 	}
 
-	public void setPassword(final String password) {
-		Password passwordCheck = new Password(password);
-		final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-		this.password = passwordEncoder.encode(password);
+	public void setPassword(final String encodedPassword) {
+		this.password = encodedPassword;
 	}
 
     public void addAuthority(final Role r) {
@@ -189,5 +186,27 @@ public class User implements UserDetails {
 
 	public void setName(String name){
 		this.name = new Name(name);
+	}
+
+	public void assignId(String id) {
+		if (id == null || id.isBlank()) throw new IllegalArgumentException("id cannot be blank");
+		this.id = id;
+	}
+
+	@PrePersist
+	void prePersist() {
+
+		var now = LocalDateTime.now();
+		if (this.createdAt == null)  this.createdAt  = now;
+		if (this.modifiedAt == null) this.modifiedAt = now;
+
+		if (this.createdBy == null)  this.createdBy  = "system"; // or "test"
+		if (this.modifiedBy == null) this.modifiedBy = this.createdBy;
+	}
+
+	@PreUpdate
+	void preUpdate() {
+		this.modifiedAt = LocalDateTime.now();
+		if (this.modifiedBy == null) this.modifiedBy = "system";
 	}
 }

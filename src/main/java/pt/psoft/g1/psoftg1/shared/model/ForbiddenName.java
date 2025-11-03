@@ -11,8 +11,8 @@ import lombok.Setter;
 public class ForbiddenName{
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long pk;
+    @Column(length = 64, nullable = false, updatable = false)
+    private String pk;
 
     @Getter
     @Setter
@@ -20,7 +20,14 @@ public class ForbiddenName{
     @Size(min = 1)
     private String forbiddenName;
 
-    public ForbiddenName(String name) {
+    public ForbiddenName(String id, String name) {
+        this.pk = id;
         this.forbiddenName = name;
     }
+
+    public void assignIdIfAbsent(String id) {
+        if (this.pk == null) this.pk = id;
+    }
+
+    public String getId() { return pk; }
 }

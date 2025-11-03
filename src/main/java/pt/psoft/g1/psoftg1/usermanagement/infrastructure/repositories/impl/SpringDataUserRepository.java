@@ -32,6 +32,7 @@ import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
@@ -50,7 +51,7 @@ import lombok.RequiredArgsConstructor;
  */
 @Repository
 @CacheConfig(cacheNames = "users")
-public interface SpringDataUserRepository extends UserRepository, UserRepoCustom, CrudRepository<User, Long> {
+public interface SpringDataUserRepository extends UserRepository, UserRepoCustom, CrudRepository<User, String> {
 
 	@Override
 	@CacheEvict(allEntries = true)
@@ -66,7 +67,7 @@ public interface SpringDataUserRepository extends UserRepository, UserRepoCustom
 	 */
 	@Override
 	@Cacheable
-	Optional<User> findById(Long objectId);
+	Optional<User> findById(String objectId);
 
 	/**
 	 * getById explicitly loads a user or throws an exception if the user does not
@@ -76,13 +77,13 @@ public interface SpringDataUserRepository extends UserRepository, UserRepoCustom
 	 * @return
 	 */
 	@Cacheable
-	default User getById(final Long id) {
+	default User getById(final String id) {
 		final Optional<User> maybeUser = findById(id);
 		// throws 404 Not Found if the user does not exist or is not enabled
 		return maybeUser.filter(User::isEnabled).orElseThrow(() -> new NotFoundException(User.class, id));
 	}
 
-	@Cacheable
+	@Cacheable(key = "#username", unless = "#result == null || !#result.isPresent()")
 	Optional<User> findByUsername(String username);
 
 	@Cacheable
