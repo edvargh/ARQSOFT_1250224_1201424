@@ -1,0 +1,14 @@
+@startuml
+actor Librarian
+participant "API Gateway" as API
+participant "Author Service" as AuthorService
+database "AuthorRepository" as AuthorRepo
+
+Librarian -> API : POST /api/authors
+API -> AuthorService : forward()
+
+AuthorService -> AuthorRepo : save(Author)
+
+AuthorService -> API : Author
+API -> Librarian : 201 CREATED
+@enduml
